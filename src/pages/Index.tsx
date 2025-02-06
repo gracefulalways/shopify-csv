@@ -24,7 +24,7 @@ const Index = () => {
   const [fieldMapping, setFieldMapping] = useState<FieldMapping>({});
   const [csvData, setCsvData] = useState<any[]>([]);
 
-  // Shopify required fields
+  // Shopify required fields based on their template
   const shopifyFields = [
     "Handle",
     "Title",
@@ -46,17 +46,6 @@ const Index = () => {
     "Image Src",
     "Status"
   ];
-
-  const downloadTemplateCSV = () => {
-    const csvContent = "data:text/csv;charset=utf-8," + shopifyFields.join(",");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "shopify_template.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   const processCSV = (file: File) => {
     const reader = new FileReader();
@@ -151,15 +140,7 @@ const Index = () => {
         
         <Card className="p-6 mb-6">
           <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-2">Step 1: Download Template</h2>
-            <p className="text-sm text-gray-500 mb-4">Download the Shopify CSV template to see the required format</p>
-            <Button onClick={downloadTemplateCSV}>
-              Download Template
-            </Button>
-          </div>
-
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-2">Step 2: Upload Your CSV</h2>
+            <h2 className="text-xl font-semibold mb-2">Upload Your CSV</h2>
             <div
               {...getRootProps()}
               className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
@@ -186,7 +167,7 @@ const Index = () => {
 
           {uploadedHeaders.length > 0 && (
             <div className="mb-6">
-              <h2 className="text-xl font-semibold mb-4">Step 3: Map Your Fields</h2>
+              <h2 className="text-xl font-semibold mb-4">Map Your Fields to Shopify Format</h2>
               <div className="grid gap-4">
                 {shopifyFields.map((shopifyField) => (
                   <div key={shopifyField} className="flex items-center gap-4">
