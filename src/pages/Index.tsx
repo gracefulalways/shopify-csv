@@ -14,6 +14,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { InfoIcon, SaveIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { MappingList } from "@/components/MappingList";
 
 interface FieldMapping {
   [key: string]: string;
@@ -172,10 +173,22 @@ const Index = () => {
         .insert({
           user_id: user.id,
           original_filename: fileName,
-          mapping_config: fieldMapping
+          mapping_config: fieldMapping,
+          is_deleted: false
         });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('upgrade to save more files')) {
+          toast({
+            title: "File Limit Reached",
+            description: "Free users can only save up to 3 files. Please upgrade to save more files.",
+            variant: "destructive",
+          });
+        } else {
+          throw error;
+        }
+        return;
+      }
 
       toast({
         title: "Success",
@@ -188,6 +201,15 @@ const Index = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleMappingSelect = (mapping: any) => {
+    setFieldMapping(mapping.mapping_config);
+    setFileName(mapping.original_filename);
+    toast({
+      title: "Mapping Loaded",
+      description: "The selected mapping configuration has been loaded.",
+    });
   };
 
   const downloadProcessedFile = () => {
@@ -245,6 +267,12 @@ const Index = () => {
             </Button>
           )}
         </div>
+
+        {user && (
+          <Card className="p-6 mb-6">
+            <MappingList onSelect={handleMappingSelect} />
+          </Card>
+        )}
         
         <Card className="p-6 mb-6">
           <div className="mb-6">
@@ -321,15 +349,31 @@ const Index = () => {
               </div>
             </div>
           )}
-
-          {Object.keys(fieldMapping).length > 0 && (
-            <div className="mt-6 flex justify-center">
-              <Button onClick={downloadProcessedFile}>
-                Download Processed File
-              </Button>
-            </div>
-          )}
         </Card>
+
+        {Object.keys(fieldMapping).length > 0 && user && (
+          <div className="mt-6 flex justify-center gap-4">
+            <Button onClick={downloadProcessedFile}>
+              Download Processed File
+            </Button>
+            <Button
+              variant="outline"
+              onClick={saveMappingConfiguration}
+              className="flex items-center gap-2"
+            >
+              <SaveIcon className="h-4 w-4" />
+              Save Mapping
+            </Button>
+          </div>
+        )}
+
+        {Object.keys(fieldMapping).length > 0 && !user && (
+          <div className="mt-6 flex justify-center">
+            <Button onClick={downloadProcessedFile}>
+              Download Processed File
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

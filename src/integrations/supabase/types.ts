@@ -13,6 +13,7 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          is_deleted: boolean | null
           mapping_config: Json
           original_filename: string
           updated_at: string | null
@@ -21,6 +22,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           id?: string
+          is_deleted?: boolean | null
           mapping_config: Json
           original_filename: string
           updated_at?: string | null
@@ -29,6 +31,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           id?: string
+          is_deleted?: boolean | null
           mapping_config?: Json
           original_filename?: string
           updated_at?: string | null
@@ -38,7 +41,13 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_file_count: {
+        Row: {
+          file_count: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
