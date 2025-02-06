@@ -1,4 +1,3 @@
-
 import { useCallback, useState, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { Card } from "@/components/ui/card";
@@ -13,7 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { InfoIcon } from "lucide-react";
+import { InfoIcon, SaveIcon } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FieldMapping {
   [key: string]: string;
@@ -26,6 +26,22 @@ const Index = () => {
   const [fieldMapping, setFieldMapping] = useState<FieldMapping>({});
   const [csvData, setCsvData] = useState<any[]>([]);
   const [isAutoMapped, setIsAutoMapped] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [fileName, setFileName] = useState<string>("");
+
+  useEffect(() => {
+    // Check initial auth state
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Shopify required fields based on their template
   const shopifyFields = [
@@ -83,6 +99,7 @@ const Index = () => {
 
   const processCSV = (file: File) => {
     const reader = new FileReader();
+    setFileName(file.name);
     reader.onload = (e) => {
       const text = e.target?.result as string;
       const lines = text.split('\n');
@@ -139,6 +156,40 @@ const Index = () => {
     }));
   };
 
+  const saveMappingConfiguration = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to save your mapping configuration.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('mapping_history')
+        .insert({
+          user_id: user.id,
+          original_filename: fileName,
+          mapping_config: fieldMapping
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Mapping configuration saved successfully!",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to save mapping configuration: " + error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const downloadProcessedFile = () => {
     // Process data according to mapping
     const processedData = csvData.map(row => {
@@ -176,7 +227,24 @@ const Index = () => {
   return (
     <div className="min-h-screen p-8 bg-gray-50">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-8">CSV Processor for Shopify</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">CSV Processor for Shopify</h1>
+          {!user ? (
+            <Button
+              variant="outline"
+              onClick={() => window.location.href = '/auth'}
+            >
+              Sign in to Save Mappings
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              onClick={() => supabase.auth.signOut()}
+            >
+              Sign Out
+            </Button>
+          )}
+        </div>
         
         <Card className="p-6 mb-6">
           <div className="mb-6">
@@ -216,7 +284,19 @@ const Index = () => {
 
           {uploadedHeaders.length > 0 && (
             <div className="mb-6">
-              <h2 className="text-xl font-semibold mb-4">Review Field Mappings</h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Review Field Mappings</h2>
+                {user && (
+                  <Button
+                    variant="outline"
+                    onClick={saveMappingConfiguration}
+                    className="flex items-center gap-2"
+                  >
+                    <SaveIcon className="h-4 w-4" />
+                    Save Mapping
+                  </Button>
+                )}
+              </div>
               <div className="grid gap-4">
                 {shopifyFields.map((shopifyField) => (
                   <div key={shopifyField} className="flex items-center gap-4">
