@@ -1,5 +1,5 @@
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -12,6 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { InfoIcon } from "lucide-react";
 
 interface FieldMapping {
   [key: string]: string;
@@ -23,6 +25,7 @@ const Index = () => {
   const [uploadedHeaders, setUploadedHeaders] = useState<string[]>([]);
   const [fieldMapping, setFieldMapping] = useState<FieldMapping>({});
   const [csvData, setCsvData] = useState<any[]>([]);
+  const [isAutoMapped, setIsAutoMapped] = useState(false);
 
   // Shopify required fields based on their template
   const shopifyFields = [
@@ -47,6 +50,37 @@ const Index = () => {
     "Status"
   ];
 
+  const autoMapFields = (headers: string[]) => {
+    const newMapping: FieldMapping = {};
+    
+    shopifyFields.forEach(shopifyField => {
+      // Convert both strings to lowercase for better matching
+      const shopifyFieldLower = shopifyField.toLowerCase();
+      
+      // Try to find exact match first
+      let match = headers.find(header => 
+        header.toLowerCase() === shopifyFieldLower
+      );
+      
+      // If no exact match, try partial matches
+      if (!match) {
+        match = headers.find(header => {
+          const headerLower = header.toLowerCase();
+          // Remove common words and check if the header contains the shopify field or vice versa
+          const cleanShopifyField = shopifyFieldLower.replace(/variant |option\d+ /g, '');
+          const cleanHeader = headerLower.replace(/variant |option\d+ /g, '');
+          return cleanHeader.includes(cleanShopifyField) || cleanShopifyField.includes(cleanHeader);
+        });
+      }
+      
+      if (match) {
+        newMapping[shopifyField] = match;
+      }
+    });
+
+    return newMapping;
+  };
+
   const processCSV = (file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -64,6 +98,16 @@ const Index = () => {
         }, {});
       });
       setCsvData(data);
+
+      // Auto map fields and show toast notification
+      const autoMapped = autoMapFields(headers);
+      setFieldMapping(autoMapped);
+      setIsAutoMapped(true);
+      
+      toast({
+        title: "Fields Auto-Mapped",
+        description: "Please review the field mappings and adjust if needed before downloading.",
+      });
     };
     reader.readAsText(file);
   };
@@ -83,10 +127,6 @@ const Index = () => {
         if (currentProgress >= 100) {
           clearInterval(interval);
           setIsProcessing(false);
-          toast({
-            title: "CSV Uploaded",
-            description: "Please map your fields to Shopify format"
-          });
         }
       }, 500);
     }
@@ -165,9 +205,18 @@ const Index = () => {
             </div>
           )}
 
+          {isAutoMapped && uploadedHeaders.length > 0 && (
+            <Alert className="mb-6">
+              <InfoIcon className="h-4 w-4" />
+              <AlertDescription>
+                Fields have been automatically mapped. Please review the mappings below and adjust if needed before downloading the processed file.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {uploadedHeaders.length > 0 && (
             <div className="mb-6">
-              <h2 className="text-xl font-semibold mb-4">Map Your Fields to Shopify Format</h2>
+              <h2 className="text-xl font-semibold mb-4">Review Field Mappings</h2>
               <div className="grid gap-4">
                 {shopifyFields.map((shopifyField) => (
                   <div key={shopifyField} className="flex items-center gap-4">
