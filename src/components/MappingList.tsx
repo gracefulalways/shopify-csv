@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
@@ -21,6 +21,10 @@ export const MappingList = ({ onSelect }: MappingListProps) => {
   const [mappings, setMappings] = useState<Mapping[]>([]);
   const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    fetchMappings();
+  }, []);
+
   const fetchMappings = async () => {
     try {
       const { data, error } = await supabase
@@ -30,7 +34,16 @@ export const MappingList = ({ onSelect }: MappingListProps) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setMappings(data || []);
+      
+      // Transform the mapping_config to ensure it's Record<string, string>
+      const transformedData = (data || []).map(item => ({
+        id: item.id,
+        original_filename: item.original_filename,
+        mapping_config: item.mapping_config as Record<string, string>,
+        created_at: item.created_at || ''
+      }));
+
+      setMappings(transformedData);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -64,10 +77,6 @@ export const MappingList = ({ onSelect }: MappingListProps) => {
       });
     }
   };
-
-  useState(() => {
-    fetchMappings();
-  }, []);
 
   if (loading) return <div>Loading saved mappings...</div>;
 
