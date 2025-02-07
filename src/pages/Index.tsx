@@ -22,7 +22,8 @@ const Index = () => {
     processCSV,
     handleFieldMapping,
     saveMappingConfiguration,
-    generateProcessedCSV
+    generateProcessedCSV,
+    setFileName
   } = useCSVProcessor();
 
   useEffect(() => {
@@ -38,7 +39,10 @@ const Index = () => {
   }, []);
 
   const handleMappingSelect = (mapping: any) => {
-    handleFieldMapping(mapping.mapping_config);
+    // Update each field in the mapping configuration
+    Object.entries(mapping.mapping_config).forEach(([shopifyField, uploadedField]) => {
+      handleFieldMapping(shopifyField, uploadedField as string);
+    });
     setFileName(mapping.original_filename);
   };
 
