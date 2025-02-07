@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { Card } from "@/components/ui/card";
-import { Trash2Icon } from "lucide-react";
+import { Trash2Icon, InfoIcon } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Mapping {
   id: string;
@@ -77,7 +78,7 @@ export const MappingList = ({ onSelect }: MappingListProps) => {
     }
   };
 
-  const handleMappingSelect = async (mapping: Mapping) => {
+  const handleMappingSelect = async (mapping: any) => {
     try {
       // Create a new File object from the stored CSV
       const response = await fetch(mapping.csv_url);
@@ -98,7 +99,22 @@ export const MappingList = ({ onSelect }: MappingListProps) => {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold">Saved Files</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold">Saved Files</h2>
+        <span className="text-sm text-gray-500">
+          {mappings.length}/3 files saved
+        </span>
+      </div>
+
+      {mappings.length === 3 && (
+        <Alert className="mb-4">
+          <InfoIcon className="h-4 w-4" />
+          <AlertDescription>
+            You have reached the maximum limit of 3 saved files. Delete an existing file to save a new one. Upgrade to a paid account coming soon!
+          </AlertDescription>
+        </Alert>
+      )}
+
       {mappings.length === 0 ? (
         <p className="text-gray-500">No saved files found.</p>
       ) : (
