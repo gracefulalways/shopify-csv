@@ -100,7 +100,8 @@ const Index = () => {
 
   const processCSV = (file: File) => {
     const reader = new FileReader();
-    setFileName(file.name);
+    // Update the filename with the ShopifyCSV- prefix
+    setFileName(`ShopifyCSV-${file.name}`);
     reader.onload = (e) => {
       const text = e.target?.result as string;
       const lines = text.split('\n');
@@ -232,7 +233,8 @@ const Index = () => {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', 'processed_shopify_products.csv');
+    // Use the fileName state which now includes the ShopifyCSV- prefix
+    link.setAttribute('download', fileName);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

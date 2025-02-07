@@ -38,6 +38,7 @@ export const MappingList = ({ onSelect }: MappingListProps) => {
       // Transform the mapping_config to ensure it's Record<string, string>
       const transformedData = (data || []).map(item => ({
         id: item.id,
+        // Display the original filename, which already includes the ShopifyCSV- prefix
         original_filename: item.original_filename,
         mapping_config: item.mapping_config as Record<string, string>,
         created_at: item.created_at || ''
@@ -82,9 +83,9 @@ export const MappingList = ({ onSelect }: MappingListProps) => {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold">Saved Mappings</h2>
+      <h2 className="text-xl font-semibold">Saved Files</h2>
       {mappings.length === 0 ? (
-        <p className="text-gray-500">No saved mappings found.</p>
+        <p className="text-gray-500">No saved files found.</p>
       ) : (
         <div className="grid gap-4">
           {mappings.map((mapping) => (
