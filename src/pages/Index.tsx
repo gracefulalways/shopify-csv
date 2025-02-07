@@ -1,20 +1,11 @@
-import { useCallback, useState, useEffect } from "react";
-import { useDropzone } from "react-dropzone";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { InfoIcon, SaveIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { MappingList } from "@/components/MappingList";
+import { CSVDropzone } from "@/components/CSVDropzone";
+import { FieldMappingForm } from "@/components/FieldMappingForm";
 
 interface FieldMapping {
   [key: string]: string;
@@ -31,12 +22,10 @@ const Index = () => {
   const [fileName, setFileName] = useState<string>("");
 
   useEffect(() => {
-    // Check initial auth state
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
@@ -44,7 +33,6 @@ const Index = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Shopify required fields based on their template
   const shopifyFields = [
     "Handle",
     "Title",
@@ -99,8 +87,10 @@ const Index = () => {
   };
 
   const processCSV = (file: File) => {
+    setIsProcessing(true);
+    setProgress(0);
+    
     const reader = new FileReader();
-    // Update the filename with the ShopifyCSV- prefix
     setFileName(`ShopifyCSV-${file.name}`);
     reader.onload = (e) => {
       const text = e.target?.result as string;
@@ -108,7 +98,6 @@ const Index = () => {
       const headers = lines[0].split(',').map(header => header.trim());
       setUploadedHeaders(headers);
       
-      // Parse CSV data
       const data = lines.slice(1).map(line => {
         const values = line.split(',');
         return headers.reduce((obj: any, header, index) => {
@@ -118,7 +107,6 @@ const Index = () => {
       });
       setCsvData(data);
 
-      // Auto map fields and show toast notification
       const autoMapped = autoMapFields(headers);
       setFieldMapping(autoMapped);
       setIsAutoMapped(true);
@@ -129,27 +117,18 @@ const Index = () => {
       });
     };
     reader.readAsText(file);
-  };
-
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    if (file) {
-      setIsProcessing(true);
-      setProgress(0);
-      processCSV(file);
+    
+    let currentProgress = 0;
+    const interval = setInterval(() => {
+      currentProgress += 10;
+      setProgress(currentProgress);
       
-      let currentProgress = 0;
-      const interval = setInterval(() => {
-        currentProgress += 10;
-        setProgress(currentProgress);
-        
-        if (currentProgress >= 100) {
-          clearInterval(interval);
-          setIsProcessing(false);
-        }
-      }, 500);
-    }
-  }, []);
+      if (currentProgress >= 100) {
+        clearInterval(interval);
+        setIsProcessing(false);
+      }
+    }, 500);
+  };
 
   const handleFieldMapping = (shopifyField: string, uploadedField: string) => {
     setFieldMapping(prev => ({
@@ -214,7 +193,6 @@ const Index = () => {
   };
 
   const downloadProcessedFile = () => {
-    // Process data according to mapping
     const processedData = csvData.map(row => {
       const processedRow: { [key: string]: string } = {};
       shopifyFields.forEach(shopifyField => {
@@ -223,7 +201,6 @@ const Index = () => {
       return processedRow;
     });
 
-    // Convert to CSV
     const csv = [
       shopifyFields.join(','),
       ...processedData.map(row => shopifyFields.map(field => row[field]).join(','))
@@ -233,20 +210,11 @@ const Index = () => {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    // Use the fileName state which now includes the ShopifyCSV- prefix
     link.setAttribute('download', fileName);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      'text/csv': ['.csv']
-    },
-    maxFiles: 1
-  });
 
   return (
     <div className="min-h-screen p-8 bg-gray-50">
@@ -277,80 +245,21 @@ const Index = () => {
         )}
         
         <Card className="p-6 mb-6">
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-2">Upload Your CSV</h2>
-            <div
-              {...getRootProps()}
-              className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
-                ${isDragActive ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-primary'}`}
-            >
-              <input {...getInputProps()} />
-              {isDragActive ? (
-                <p className="text-lg">Drop the CSV file here...</p>
-              ) : (
-                <div>
-                  <p className="text-lg mb-2">Drag & drop a CSV file here, or click to select</p>
-                  <p className="text-sm text-gray-500">Only .csv files are accepted</p>
-                </div>
-              )}
-            </div>
-          </div>
+          <CSVDropzone
+            onFileProcess={processCSV}
+            isProcessing={isProcessing}
+            progress={progress}
+          />
 
-          {isProcessing && (
-            <div className="mb-6">
-              <p className="text-sm font-medium mb-2">Processing file...</p>
-              <Progress value={progress} className="h-2" />
-            </div>
-          )}
-
-          {isAutoMapped && uploadedHeaders.length > 0 && (
-            <Alert className="mb-6">
-              <InfoIcon className="h-4 w-4" />
-              <AlertDescription>
-                Fields have been automatically mapped. Please review the mappings below and adjust if needed before downloading the processed file.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {uploadedHeaders.length > 0 && (
-            <div className="mb-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Review Field Mappings</h2>
-                {user && (
-                  <Button
-                    variant="outline"
-                    onClick={saveMappingConfiguration}
-                    className="flex items-center gap-2"
-                  >
-                    <SaveIcon className="h-4 w-4" />
-                    Save Mapping
-                  </Button>
-                )}
-              </div>
-              <div className="grid gap-4">
-                {shopifyFields.map((shopifyField) => (
-                  <div key={shopifyField} className="flex items-center gap-4">
-                    <span className="w-1/3 text-sm font-medium">{shopifyField}</span>
-                    <Select
-                      value={fieldMapping[shopifyField]}
-                      onValueChange={(value) => handleFieldMapping(shopifyField, value)}
-                    >
-                      <SelectTrigger className="w-2/3">
-                        <SelectValue placeholder="Select field..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {uploadedHeaders.map((header) => (
-                          <SelectItem key={header} value={header}>
-                            {header}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <FieldMappingForm
+            isAutoMapped={isAutoMapped}
+            uploadedHeaders={uploadedHeaders}
+            shopifyFields={shopifyFields}
+            fieldMapping={fieldMapping}
+            onFieldMapping={handleFieldMapping}
+            onSaveMapping={saveMappingConfiguration}
+            user={user}
+          />
         </Card>
 
         {Object.keys(fieldMapping).length > 0 && user && (
