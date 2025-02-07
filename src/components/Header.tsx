@@ -1,5 +1,6 @@
 
 import { Button } from "@/components/ui/button";
+import { Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface HeaderProps {
@@ -10,7 +11,10 @@ export const Header = ({ user }: HeaderProps) => {
   return (
     <div className="mb-8">
       <div className="text-center mb-6">
-        <h1 className="text-4xl font-bold text-primary mb-2">ShopifyCSV.app</h1>
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <Package className="h-8 w-8 text-primary" />
+          <h1 className="text-4xl font-bold text-primary">ShopifyCSV.app</h1>
+        </div>
         <p className="text-lg text-gray-600">Upload. Format. Sell.</p>
         <p className="mt-4 text-gray-600 max-w-2xl mx-auto">
           ShopifyCSV.app makes it effortless to convert your inventory files into Shopify-ready CSVs. 
