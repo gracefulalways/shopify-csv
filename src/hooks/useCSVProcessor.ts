@@ -182,6 +182,7 @@ export const useCSVProcessor = () => {
     processCSV,
     handleFieldMapping,
     saveMappingConfiguration,
-    generateProcessedCSV
+    generateProcessedCSV,
+    setFileName
   };
 };

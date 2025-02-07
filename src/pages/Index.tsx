@@ -1,12 +1,13 @@
+
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { MappingList } from "@/components/MappingList";
 import { CSVDropzone } from "@/components/CSVDropzone";
 import { FieldMappingForm } from "@/components/FieldMappingForm";
 import { useCSVProcessor } from "@/hooks/useCSVProcessor";
-import { SaveIcon } from "lucide-react";
+import { Header } from "@/components/Header";
+import { ActionButtons } from "@/components/ActionButtons";
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
@@ -37,7 +38,7 @@ const Index = () => {
   }, []);
 
   const handleMappingSelect = (mapping: any) => {
-    setFieldMapping(mapping.mapping_config);
+    handleFieldMapping(mapping.mapping_config);
     setFileName(mapping.original_filename);
   };
 
@@ -56,24 +57,7 @@ const Index = () => {
   return (
     <div className="min-h-screen p-8 bg-gray-50">
       <div className="max-w-3xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">CSV Processor for Shopify</h1>
-          {!user ? (
-            <Button
-              variant="outline"
-              onClick={() => window.location.href = '/auth'}
-            >
-              Sign in to Save Mappings
-            </Button>
-          ) : (
-            <Button
-              variant="outline"
-              onClick={() => supabase.auth.signOut()}
-            >
-              Sign Out
-            </Button>
-          )}
-        </div>
+        <Header user={user} />
 
         {user && (
           <Card className="p-6 mb-6">
@@ -99,28 +83,12 @@ const Index = () => {
           />
         </Card>
 
-        {Object.keys(fieldMapping).length > 0 && user && (
-          <div className="mt-6 flex justify-center gap-4">
-            <Button onClick={downloadProcessedFile}>
-              Download Processed File
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => user && saveMappingConfiguration(user.id)}
-              className="flex items-center gap-2"
-            >
-              <SaveIcon className="h-4 w-4" />
-              Save Mapping
-            </Button>
-          </div>
-        )}
-
-        {Object.keys(fieldMapping).length > 0 && !user && (
-          <div className="mt-6 flex justify-center">
-            <Button onClick={downloadProcessedFile}>
-              Download Processed File
-            </Button>
-          </div>
+        {Object.keys(fieldMapping).length > 0 && (
+          <ActionButtons
+            user={user}
+            onDownload={downloadProcessedFile}
+            onSaveMapping={() => user && saveMappingConfiguration(user.id)}
+          />
         )}
       </div>
     </div>
