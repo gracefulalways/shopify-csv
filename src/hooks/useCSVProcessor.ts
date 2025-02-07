@@ -1,6 +1,9 @@
+
 import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { parseCSVLine, escapeCSVValue } from "@/utils/csvUtils";
+import { shopifyFields, autoMapFields } from "@/utils/fieldMappingUtils";
+import { saveMappingConfiguration } from "@/utils/mappingStorage";
 
 interface FieldMapping {
   [key: string]: string;
@@ -14,100 +17,6 @@ export const useCSVProcessor = () => {
   const [csvData, setCsvData] = useState<any[]>([]);
   const [isAutoMapped, setIsAutoMapped] = useState(false);
   const [fileName, setFileName] = useState<string>("");
-
-  const shopifyFields = [
-    "Handle",
-    "Title",
-    "Body (HTML)",
-    "Vendor",
-    "Product Category",
-    "Type",
-    "Tags",
-    "Published",
-    "Option1 Name",
-    "Option1 Value",
-    "Variant SKU",
-    "Variant Price",
-    "Variant Compare At Price",
-    "Variant Inventory Tracker",
-    "Variant Inventory Quantity",
-    "Variant Weight",
-    "Variant Weight Unit",
-    "Image Src",
-    "Status"
-  ];
-
-  const parseCSVLine = (line: string): string[] => {
-    const result: string[] = [];
-    let field = '';
-    let insideQuotes = false;
-    
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i];
-      
-      if (char === '"') {
-        if (insideQuotes) {
-          if (i + 1 < line.length && line[i + 1] === '"') {
-            // Handle escaped quotes
-            field += '"';
-            i++; // Skip next quote
-          } else {
-            // End of quoted section
-            insideQuotes = false;
-          }
-        } else {
-          // Start of quoted section
-          insideQuotes = true;
-        }
-      } else if (char === ',' && !insideQuotes) {
-        // End of field - only if not inside quotes
-        result.push(field.trim());
-        field = '';
-      } else {
-        field += char;
-      }
-    }
-    
-    // Push the last field
-    result.push(field.trim());
-    
-    // Clean up any remaining quotes at the start/end of fields
-    return result.map(field => {
-      if (field.startsWith('"') && field.endsWith('"')) {
-        return field.slice(1, -1).replace(/""/g, '"');
-      }
-      return field;
-    });
-  };
-
-  const autoMapFields = (headers: string[]) => {
-    const newMapping: FieldMapping = {};
-    
-    shopifyFields.forEach(shopifyField => {
-      const shopifyFieldLower = shopifyField.toLowerCase();
-      
-      let match = headers.find(header => 
-        header.toLowerCase() === shopifyFieldLower
-      );
-      
-      if (!match) {
-        match = headers.find(header => {
-          const headerLower = header.toLowerCase();
-          const cleanShopifyField = shopifyFieldLower.replace(/variant |option\d+ /g, '');
-          const cleanHeader = headerLower.replace(/variant |option\d+ /g, '');
-          return cleanHeader.includes(cleanShopifyField) || cleanShopifyField.includes(cleanHeader);
-        });
-      }
-      
-      if (match) {
-        newMapping[shopifyField] = match;
-      } else {
-        newMapping[shopifyField] = "";
-      }
-    });
-
-    return newMapping;
-  };
 
   const processCSV = (file: File) => {
     setIsProcessing(true);
@@ -131,7 +40,7 @@ export const useCSVProcessor = () => {
       });
       setCsvData(data);
 
-      const autoMapped = autoMapFields(headers);
+      const autoMapped = autoMapFields(headers, shopifyFields);
       setFieldMapping(autoMapped);
       setIsAutoMapped(true);
       
@@ -159,54 +68,6 @@ export const useCSVProcessor = () => {
       ...prev,
       [shopifyField]: uploadedField
     }));
-  };
-
-  const saveMappingConfiguration = async (userId: string) => {
-    try {
-      const { error } = await supabase
-        .from('mapping_history')
-        .insert({
-          user_id: userId,
-          original_filename: fileName,
-          mapping_config: fieldMapping,
-          is_deleted: false
-        });
-
-      if (error) {
-        if (error.message.includes('upgrade to save more files')) {
-          toast({
-            title: "File Limit Reached",
-            description: "Free users can only save up to 3 files. Please upgrade to save more files.",
-            variant: "destructive",
-          });
-        } else {
-          throw error;
-        }
-        return;
-      }
-
-      toast({
-        title: "Success",
-        description: "Mapping configuration saved successfully!",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "Failed to save mapping configuration: " + error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const escapeCSVValue = (value: string): string => {
-    if (!value) return '';
-    
-    // If the value contains quotes, commas, or newlines, it needs to be escaped
-    if (value.includes('"') || value.includes(',') || value.includes('\n')) {
-      // Replace any quotes with double quotes and wrap the entire value in quotes
-      return `"${value.replace(/"/g, '""')}"`;
-    }
-    return value;
   };
 
   const generateProcessedCSV = () => {
