@@ -8,23 +8,54 @@ interface HeaderProps {
 
 export const Header = ({ user }: HeaderProps) => {
   return (
-    <div className="flex justify-between items-center mb-8">
-      <h1 className="text-3xl font-bold">CSV Processor for Shopify</h1>
-      {!user ? (
-        <Button
-          variant="outline"
-          onClick={() => window.location.href = '/auth'}
-        >
-          Sign in to Save Mappings
-        </Button>
-      ) : (
-        <Button
-          variant="outline"
-          onClick={() => supabase.auth.signOut()}
-        >
-          Sign Out
-        </Button>
-      )}
+    <div className="mb-8">
+      <div className="text-center mb-6">
+        <h1 className="text-4xl font-bold text-primary mb-2">ShopifyCSV.app</h1>
+        <p className="text-lg text-gray-600">Upload. Format. Sell.</p>
+        <p className="mt-4 text-gray-600 max-w-2xl mx-auto">
+          ShopifyCSV.app makes it effortless to convert your inventory files into Shopify-ready CSVs. 
+          Simply upload your file, let our tool format it to meet Shopify's exact requirements, and 
+          download your ready-to-use CSV in seconds. No manual edits, no hassle. Just a seamless way 
+          to get your products online faster.
+        </p>
+      </div>
+      
+      {/* Google AdSense Script */}
+      <script 
+        async 
+        src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_PUBLISHER_ID"
+        crossOrigin="anonymous"
+      ></script>
+      {/* AdSense Ad Unit */}
+      <ins 
+        className="adsbygoogle"
+        style={{ display: 'block' }}
+        data-ad-client="ca-pub-YOUR_PUBLISHER_ID"
+        data-ad-slot="YOUR_AD_SLOT_ID"
+        data-ad-format="auto"
+        data-full-width-responsive="true"
+      ></ins>
+      <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
+
+      <div className="flex justify-end">
+        {!user ? (
+          <Button
+            variant="outline"
+            onClick={() => window.location.href = '/auth'}
+          >
+            Sign In to Save File
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            onClick={() => supabase.auth.signOut()}
+          >
+            Sign Out
+          </Button>
+        )}
+      </div>
     </div>
   );
 };

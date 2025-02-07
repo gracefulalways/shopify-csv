@@ -7,6 +7,7 @@ import { CSVDropzone } from "@/components/CSVDropzone";
 import { FieldMappingForm } from "@/components/FieldMappingForm";
 import { useCSVProcessor } from "@/hooks/useCSVProcessor";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { ActionButtons } from "@/components/ActionButtons";
 
 const Index = () => {
@@ -39,7 +40,6 @@ const Index = () => {
   }, []);
 
   const handleMappingSelect = (mapping: any) => {
-    // Update each field in the mapping configuration
     Object.entries(mapping.mapping_config).forEach(([shopifyField, uploadedField]) => {
       handleFieldMapping(shopifyField, uploadedField as string);
     });
@@ -82,7 +82,7 @@ const Index = () => {
             shopifyFields={shopifyFields}
             fieldMapping={fieldMapping}
             onFieldMapping={handleFieldMapping}
-            onSaveMapping={() => user && saveMappingConfiguration(user.id)}
+            onSaveMapping={() => saveMappingConfiguration(user?.id, fileName, fieldMapping)}
             user={user}
           />
         </Card>
@@ -91,9 +91,11 @@ const Index = () => {
           <ActionButtons
             user={user}
             onDownload={downloadProcessedFile}
-            onSaveMapping={() => user && saveMappingConfiguration(user.id)}
+            onSaveMapping={() => saveMappingConfiguration(user?.id, fileName, fieldMapping)}
           />
         )}
+
+        <Footer />
       </div>
     </div>
   );
