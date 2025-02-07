@@ -35,10 +35,8 @@ export const MappingList = ({ onSelect }: MappingListProps) => {
 
       if (error) throw error;
       
-      // Transform the mapping_config to ensure it's Record<string, string>
       const transformedData = (data || []).map(item => ({
         id: item.id,
-        // Display the original filename, which already includes the ShopifyCSV- prefix
         original_filename: item.original_filename,
         mapping_config: item.mapping_config as Record<string, string>,
         created_at: item.created_at || ''
@@ -79,6 +77,23 @@ export const MappingList = ({ onSelect }: MappingListProps) => {
     }
   };
 
+  const handleMappingSelect = async (mapping: Mapping) => {
+    try {
+      // Create a new File object from the stored CSV
+      const response = await fetch(mapping.csv_url);
+      const blob = await response.blob();
+      const file = new File([blob], mapping.original_filename, { type: 'text/csv' });
+      
+      onSelect({ ...mapping, file });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to load the saved CSV file",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) return <div>Loading saved mappings...</div>;
 
   return (
@@ -100,7 +115,7 @@ export const MappingList = ({ onSelect }: MappingListProps) => {
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
-                    onClick={() => onSelect(mapping)}
+                    onClick={() => handleMappingSelect(mapping)}
                   >
                     Use This Mapping
                   </Button>

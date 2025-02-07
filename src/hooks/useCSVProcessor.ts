@@ -4,6 +4,7 @@ import { toast } from "@/components/ui/use-toast";
 import { parseCSVLine, escapeCSVValue } from "@/utils/csvUtils";
 import { shopifyFields, autoMapFields } from "@/utils/fieldMappingUtils";
 import { saveMappingConfiguration } from "@/utils/mappingStorage";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FieldMapping {
   [key: string]: string;
@@ -17,16 +18,17 @@ export const useCSVProcessor = () => {
   const [csvData, setCsvData] = useState<any[]>([]);
   const [isAutoMapped, setIsAutoMapped] = useState(false);
   const [fileName, setFileName] = useState<string>("");
+  const [rawCSV, setRawCSV] = useState<string>("");
 
-  const processCSV = (file: File) => {
+  const processCSV = async (file: File, skipUpload: boolean = false) => {
     setIsProcessing(true);
     setProgress(0);
-    
-    const reader = new FileReader();
     setFileName(`ShopifyCSV-${file.name}`);
 
-    reader.onload = (e) => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
       const text = e.target?.result as string;
+      setRawCSV(text);
       const lines = text.split(/\r?\n/).filter(line => line.trim());
       const headers = parseCSVLine(lines[0]);
       setUploadedHeaders(headers);
@@ -43,12 +45,35 @@ export const useCSVProcessor = () => {
       const autoMapped = autoMapFields(headers, shopifyFields);
       setFieldMapping(autoMapped);
       setIsAutoMapped(true);
+
+      // Upload the file to Supabase Storage if not skipping upload
+      if (!skipUpload) {
+        const user = (await supabase.auth.getUser()).data.user;
+        if (user) {
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('userId', user.id);
+
+          const response = await supabase.functions.invoke('upload-csv', {
+            body: formData,
+          });
+
+          if (response.error) {
+            toast({
+              title: "Error",
+              description: "Failed to upload file. Your mapping will still work but won't be saved for later use.",
+              variant: "destructive",
+            });
+          }
+        }
+      }
       
       toast({
         title: "Fields Auto-Mapped",
         description: "Please review the field mappings and adjust if needed before downloading.",
       });
     };
+
     reader.readAsText(file);
     
     let currentProgress = 0;
@@ -101,6 +126,7 @@ export const useCSVProcessor = () => {
     handleFieldMapping,
     saveMappingConfiguration,
     generateProcessedCSV,
-    setFileName
+    setFileName,
+    rawCSV
   };
 };
