@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,16 +46,21 @@ export const useCSVProcessor = () => {
       const char = line[i];
       
       if (char === '"') {
-        if (insideQuotes && line[i + 1] === '"') {
-          // Handle escaped quotes (two consecutive quotes)
-          field += '"';
-          i++;
+        if (insideQuotes) {
+          if (i + 1 < line.length && line[i + 1] === '"') {
+            // Handle escaped quotes
+            field += '"';
+            i++; // Skip next quote
+          } else {
+            // End of quoted section
+            insideQuotes = false;
+          }
         } else {
-          // Toggle insideQuotes flag
-          insideQuotes = !insideQuotes;
+          // Start of quoted section
+          insideQuotes = true;
         }
       } else if (char === ',' && !insideQuotes) {
-        // End of field
+        // End of field - only if not inside quotes
         result.push(field.trim());
         field = '';
       } else {
@@ -66,7 +70,14 @@ export const useCSVProcessor = () => {
     
     // Push the last field
     result.push(field.trim());
-    return result;
+    
+    // Clean up any remaining quotes at the start/end of fields
+    return result.map(field => {
+      if (field.startsWith('"') && field.endsWith('"')) {
+        return field.slice(1, -1).replace(/""/g, '"');
+      }
+      return field;
+    });
   };
 
   const autoMapFields = (headers: string[]) => {
@@ -187,14 +198,24 @@ export const useCSVProcessor = () => {
     }
   };
 
+  const escapeCSVValue = (value: string): string => {
+    if (!value) return '';
+    
+    // If the value contains quotes, commas, or newlines, it needs to be escaped
+    if (value.includes('"') || value.includes(',') || value.includes('\n')) {
+      // Replace any quotes with double quotes and wrap the entire value in quotes
+      return `"${value.replace(/"/g, '""')}"`;
+    }
+    return value;
+  };
+
   const generateProcessedCSV = () => {
     const processedData = csvData.map(row => {
       const processedRow: { [key: string]: string } = {};
       shopifyFields.forEach(shopifyField => {
         const mappedField = fieldMapping[shopifyField];
         const value = mappedField && mappedField !== "" ? (row[mappedField] || '') : '';
-        // Escape values containing commas with quotes
-        processedRow[shopifyField] = value.includes(',') ? `"${value}"` : value;
+        processedRow[shopifyField] = escapeCSVValue(value);
       });
       return processedRow;
     });
