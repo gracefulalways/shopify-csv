@@ -90,8 +90,6 @@ export const MappingList = ({ onSelect }: MappingListProps) => {
       return;
     }
 
-    // Instead of adding a file property to the mapping object,
-    // we'll just pass the mapping as is
     onSelect(mapping);
   };
 
