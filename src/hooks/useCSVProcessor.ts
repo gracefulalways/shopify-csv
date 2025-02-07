@@ -38,6 +38,37 @@ export const useCSVProcessor = () => {
     "Status"
   ];
 
+  const parseCSVLine = (line: string): string[] => {
+    const result: string[] = [];
+    let field = '';
+    let insideQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      
+      if (char === '"') {
+        if (insideQuotes && line[i + 1] === '"') {
+          // Handle escaped quotes (two consecutive quotes)
+          field += '"';
+          i++;
+        } else {
+          // Toggle insideQuotes flag
+          insideQuotes = !insideQuotes;
+        }
+      } else if (char === ',' && !insideQuotes) {
+        // End of field
+        result.push(field.trim());
+        field = '';
+      } else {
+        field += char;
+      }
+    }
+    
+    // Push the last field
+    result.push(field.trim());
+    return result;
+  };
+
   const autoMapFields = (headers: string[]) => {
     const newMapping: FieldMapping = {};
     
@@ -76,14 +107,14 @@ export const useCSVProcessor = () => {
 
     reader.onload = (e) => {
       const text = e.target?.result as string;
-      const lines = text.split('\n');
-      const headers = lines[0].split(',').map(header => header.trim());
+      const lines = text.split(/\r?\n/).filter(line => line.trim());
+      const headers = parseCSVLine(lines[0]);
       setUploadedHeaders(headers);
       
       const data = lines.slice(1).map(line => {
-        const values = line.split(',');
+        const values = parseCSVLine(line);
         return headers.reduce((obj: any, header, index) => {
-          obj[header] = values[index];
+          obj[header] = values[index] || '';
           return obj;
         }, {});
       });
@@ -161,7 +192,9 @@ export const useCSVProcessor = () => {
       const processedRow: { [key: string]: string } = {};
       shopifyFields.forEach(shopifyField => {
         const mappedField = fieldMapping[shopifyField];
-        processedRow[shopifyField] = mappedField && mappedField !== "" ? (row[mappedField] || '') : '';
+        const value = mappedField && mappedField !== "" ? (row[mappedField] || '') : '';
+        // Escape values containing commas with quotes
+        processedRow[shopifyField] = value.includes(',') ? `"${value}"` : value;
       });
       return processedRow;
     });
