@@ -42,11 +42,12 @@ export const MappingList = ({ onSelect }: MappingListProps) => {
         original_filename: item.original_filename,
         mapping_config: item.mapping_config as Record<string, string>,
         created_at: item.created_at || '',
-        csv_content: item.csv_content
+        csv_content: item.csv_content || ''
       }));
 
       setMappings(transformedData);
     } catch (error: any) {
+      console.error('Error fetching mappings:', error);
       toast({
         title: "Error",
         description: error.message,
@@ -72,6 +73,7 @@ export const MappingList = ({ onSelect }: MappingListProps) => {
         description: "Mapping deleted successfully",
       });
     } catch (error: any) {
+      console.error('Error deleting mapping:', error);
       toast({
         title: "Error",
         description: error.message,
@@ -82,6 +84,7 @@ export const MappingList = ({ onSelect }: MappingListProps) => {
 
   const handleMappingSelect = (mapping: Mapping) => {
     if (!mapping.csv_content) {
+      console.error('No CSV content found for mapping:', mapping.id);
       toast({
         title: "Error",
         description: "No CSV content found for this mapping",
