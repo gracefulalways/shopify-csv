@@ -24,7 +24,8 @@ const Index = () => {
     handleFieldMapping,
     saveMappingConfiguration,
     generateProcessedCSV,
-    setFileName
+    setFileName,
+    rawCSV
   } = useCSVProcessor();
 
   useEffect(() => {
@@ -44,6 +45,10 @@ const Index = () => {
       handleFieldMapping(shopifyField, uploadedField as string);
     });
     setFileName(mapping.original_filename);
+    // Create a file from the CSV content and process it
+    const blob = new Blob([mapping.csv_content], { type: 'text/csv' });
+    const file = new File([blob], mapping.original_filename, { type: 'text/csv' });
+    processCSV(file, true); // Pass true to skip upload since we're loading an existing file
   };
 
   const downloadProcessedFile = () => {
@@ -82,7 +87,7 @@ const Index = () => {
             shopifyFields={shopifyFields}
             fieldMapping={fieldMapping}
             onFieldMapping={handleFieldMapping}
-            onSaveMapping={() => saveMappingConfiguration(user?.id, fileName, fieldMapping)}
+            onSaveMapping={() => saveMappingConfiguration(user?.id, fileName, fieldMapping, rawCSV)}
             user={user}
           />
         </Card>
@@ -91,7 +96,7 @@ const Index = () => {
           <ActionButtons
             user={user}
             onDownload={downloadProcessedFile}
-            onSaveMapping={() => saveMappingConfiguration(user?.id, fileName, fieldMapping)}
+            onSaveMapping={() => saveMappingConfiguration(user?.id, fileName, fieldMapping, rawCSV)}
           />
         )}
 

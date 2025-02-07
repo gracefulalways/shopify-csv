@@ -12,6 +12,7 @@ export type Database = {
       mapping_history: {
         Row: {
           created_at: string | null
+          csv_content: string | null
           csv_url: string | null
           id: string
           is_deleted: boolean | null
@@ -22,6 +23,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          csv_content?: string | null
           csv_url?: string | null
           id?: string
           is_deleted?: boolean | null
@@ -32,6 +34,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          csv_content?: string | null
           csv_url?: string | null
           id?: string
           is_deleted?: boolean | null

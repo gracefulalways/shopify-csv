@@ -5,7 +5,8 @@ import { toast } from "@/components/ui/use-toast";
 export const saveMappingConfiguration = async (
   userId: string,
   fileName: string,
-  fieldMapping: { [key: string]: string }
+  fieldMapping: { [key: string]: string },
+  csvContent: string
 ) => {
   try {
     const { error } = await supabase
@@ -14,7 +15,8 @@ export const saveMappingConfiguration = async (
         user_id: userId,
         original_filename: fileName,
         mapping_config: fieldMapping,
-        is_deleted: false
+        is_deleted: false,
+        csv_content: csvContent
       });
 
     if (error) {

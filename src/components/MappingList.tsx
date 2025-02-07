@@ -12,6 +12,7 @@ interface Mapping {
   original_filename: string;
   mapping_config: Record<string, string>;
   created_at: string;
+  csv_content?: string;
 }
 
 interface MappingListProps {
@@ -40,7 +41,8 @@ export const MappingList = ({ onSelect }: MappingListProps) => {
         id: item.id,
         original_filename: item.original_filename,
         mapping_config: item.mapping_config as Record<string, string>,
-        created_at: item.created_at || ''
+        created_at: item.created_at || '',
+        csv_content: item.csv_content
       }));
 
       setMappings(transformedData);
@@ -78,21 +80,21 @@ export const MappingList = ({ onSelect }: MappingListProps) => {
     }
   };
 
-  const handleMappingSelect = async (mapping: any) => {
-    try {
-      // Create a new File object from the stored CSV
-      const response = await fetch(mapping.csv_url);
-      const blob = await response.blob();
-      const file = new File([blob], mapping.original_filename, { type: 'text/csv' });
-      
-      onSelect({ ...mapping, file });
-    } catch (error: any) {
+  const handleMappingSelect = (mapping: Mapping) => {
+    if (!mapping.csv_content) {
       toast({
         title: "Error",
-        description: "Failed to load the saved CSV file",
+        description: "No CSV content found for this mapping",
         variant: "destructive",
       });
+      return;
     }
+
+    // Create a new File object from the stored CSV content
+    const blob = new Blob([mapping.csv_content], { type: 'text/csv' });
+    const file = new File([blob], mapping.original_filename, { type: 'text/csv' });
+    
+    onSelect({ ...mapping, file });
   };
 
   if (loading) return <div>Loading saved mappings...</div>;
