@@ -54,14 +54,14 @@ export const FieldMappingForm = ({
               <div key={shopifyField} className="flex items-center gap-4">
                 <span className="w-1/3 text-sm font-medium">{shopifyField}</span>
                 <Select
-                  value={fieldMapping[shopifyField] || ""}
-                  onValueChange={(value) => onFieldMapping(shopifyField, value)}
+                  value={fieldMapping[shopifyField] || "__NONE__"}
+                  onValueChange={(value) => onFieldMapping(shopifyField, value === "__NONE__" ? "" : value)}
                 >
                   <SelectTrigger className="w-2/3">
                     <SelectValue placeholder="Select field..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None (leave empty)</SelectItem>
+                    <SelectItem value="__NONE__">None (leave empty)</SelectItem>
                     {uploadedHeaders.map((header) => (
                       <SelectItem key={header} value={header}>
                         {header}
