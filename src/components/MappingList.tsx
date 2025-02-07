@@ -90,11 +90,9 @@ export const MappingList = ({ onSelect }: MappingListProps) => {
       return;
     }
 
-    // Create a new File object from the stored CSV content
-    const blob = new Blob([mapping.csv_content], { type: 'text/csv' });
-    const file = new File([blob], mapping.original_filename, { type: 'text/csv' });
-    
-    onSelect({ ...mapping, file });
+    // Instead of adding a file property to the mapping object,
+    // we'll just pass the mapping as is
+    onSelect(mapping);
   };
 
   if (loading) return <div>Loading saved mappings...</div>;
