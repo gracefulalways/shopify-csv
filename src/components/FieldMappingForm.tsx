@@ -54,13 +54,14 @@ export const FieldMappingForm = ({
               <div key={shopifyField} className="flex items-center gap-4">
                 <span className="w-1/3 text-sm font-medium">{shopifyField}</span>
                 <Select
-                  value={fieldMapping[shopifyField]}
+                  value={fieldMapping[shopifyField] || ""}
                   onValueChange={(value) => onFieldMapping(shopifyField, value)}
                 >
                   <SelectTrigger className="w-2/3">
                     <SelectValue placeholder="Select field..." />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="">None (leave empty)</SelectItem>
                     {uploadedHeaders.map((header) => (
                       <SelectItem key={header} value={header}>
                         {header}

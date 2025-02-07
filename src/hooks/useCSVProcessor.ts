@@ -158,7 +158,8 @@ export const useCSVProcessor = () => {
     const processedData = csvData.map(row => {
       const processedRow: { [key: string]: string } = {};
       shopifyFields.forEach(shopifyField => {
-        processedRow[shopifyField] = row[fieldMapping[shopifyField]] || '';
+        // If there's no mapping for this field or the mapping is empty string, use empty string
+        processedRow[shopifyField] = fieldMapping[shopifyField] ? row[fieldMapping[shopifyField]] || '' : '';
       });
       return processedRow;
     });
