@@ -60,12 +60,17 @@ const processWorkbookSheet = (workbook: WorkBook, sheetName: string): string => 
   const range = utils.decode_range(sheet['!ref'] || 'A1');
   const totalRows = range.e.r + 1;
   
-  // Process headers first
+  // Process headers first with proper typing
   const headerRowData = utils.sheet_to_json(sheet, { 
     header: 1,
     range: 0
-  })[0];
-  const headers = headerRowData.map((header: any) => 
+  }) as any[];
+  
+  if (!headerRowData.length) {
+    throw new Error('No header row found in the sheet');
+  }
+
+  const headers = (headerRowData[0] as any[]).map(header => 
     typeof header === 'string' ? `"${header}"` : `"${String(header)}"`
   ).join(',');
   
@@ -79,7 +84,7 @@ const processWorkbookSheet = (workbook: WorkBook, sheetName: string): string => 
     const chunkData = utils.sheet_to_json(sheet, {
       header: 1,
       range: startRow // This will start from the row we want
-    });
+    }) as any[];
     
     // Convert chunk data to CSV format with proper quoting
     const chunkCsv = chunkData.map(row => {
