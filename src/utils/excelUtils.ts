@@ -1,7 +1,12 @@
 
 import { read, utils, write } from 'xlsx';
 
-export const processExcelFile = (file: File): Promise<string> => {
+interface ExcelProcessingResult {
+  sheets?: string[];
+  csvContent?: string;
+}
+
+export const processExcelFile = (file: File): Promise<ExcelProcessingResult> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     
@@ -10,12 +15,35 @@ export const processExcelFile = (file: File): Promise<string> => {
         const data = e.target?.result;
         const workbook = read(data, { type: 'binary' });
         
-        // Get first sheet
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        
-        // Convert to CSV
-        const csvContent = utils.sheet_to_csv(firstSheet);
-        
+        // If there are multiple sheets, return the list of sheets
+        if (workbook.SheetNames.length > 1) {
+          resolve({ sheets: workbook.SheetNames });
+        } else {
+          // If there's only one sheet, process it directly
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const csvContent = utils.sheet_to_csv(firstSheet);
+          resolve({ csvContent });
+        }
+      } catch (error) {
+        reject(error);
+      }
+    };
+    
+    reader.onerror = (error) => reject(error);
+    reader.readAsBinaryString(file);
+  });
+};
+
+export const processExcelSheet = (file: File, sheetName: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      try {
+        const data = e.target?.result;
+        const workbook = read(data, { type: 'binary' });
+        const sheet = workbook.Sheets[sheetName];
+        const csvContent = utils.sheet_to_csv(sheet);
         resolve(csvContent);
       } catch (error) {
         reject(error);

@@ -4,7 +4,7 @@ import { toast } from "@/components/ui/use-toast";
 import { parseCSVLine, escapeCSVValue } from "@/utils/csvUtils";
 import { shopifyFields, autoMapFields } from "@/utils/fieldMappingUtils";
 import { saveMappingConfiguration } from "@/utils/mappingStorage";
-import { processExcelFile, convertCSVToExcel } from "@/utils/excelUtils";
+import { processExcelFile, processExcelSheet, convertCSVToExcel } from "@/utils/excelUtils";
 import { supabase } from "@/integrations/supabase/client";
 
 interface FieldMapping {
@@ -20,14 +20,85 @@ export const useCSVProcessor = () => {
   const [isAutoMapped, setIsAutoMapped] = useState(false);
   const [fileName, setFileName] = useState<string>("");
   const [rawCSV, setRawCSV] = useState<string>("");
+  const [availableSheets, setAvailableSheets] = useState<string[]>([]);
+  const [showSheetSelector, setShowSheetSelector] = useState(false);
+  const [pendingExcelFile, setPendingExcelFile] = useState<File | null>(null);
+  const [skipUploadFlag, setSkipUploadFlag] = useState(false);
+
+  const processFileContent = (text: string) => {
+    const lines = text.split(/\r?\n/).filter(line => line.trim());
+    const headers = parseCSVLine(lines[0]);
+    setUploadedHeaders(headers);
+    
+    const data = lines.slice(1).map(line => {
+      const values = parseCSVLine(line);
+      return headers.reduce((obj: any, header, index) => {
+        obj[header] = values[index] || '';
+        return obj;
+      }, {});
+    });
+    setCsvData(data);
+
+    const autoMapped = autoMapFields(headers, shopifyFields);
+    setFieldMapping(autoMapped);
+    setIsAutoMapped(true);
+  };
+
+  const handleSheetSelect = async (sheetName: string) => {
+    if (!pendingExcelFile) return;
+    
+    try {
+      const csvContent = await processExcelSheet(pendingExcelFile, sheetName);
+      setRawCSV(csvContent);
+      processFileContent(csvContent);
+      
+      // Handle file upload if needed
+      if (!skipUploadFlag) {
+        const user = (await supabase.auth.getUser()).data.user;
+        if (user) {
+          const formData = new FormData();
+          formData.append('file', pendingExcelFile);
+          formData.append('userId', user.id);
+
+          const response = await supabase.functions.invoke('upload-csv', {
+            body: formData,
+          });
+
+          if (response.error) {
+            toast({
+              title: "Error",
+              description: "Failed to upload file. Your mapping will still work but won't be saved for later use.",
+              variant: "destructive",
+            });
+          }
+        }
+      }
+      
+      setShowSheetSelector(false);
+      setPendingExcelFile(null);
+      setSkipUploadFlag(false);
+      
+      toast({
+        title: "Fields Auto-Mapped",
+        description: "Please review the field mappings and adjust if needed before downloading.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to process sheet. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const processCSV = async (file: File, skipUpload: boolean = false) => {
     setIsProcessing(true);
     setProgress(0);
     setFileName(`ShopifyCSV-${file.name}`);
+    setSkipUploadFlag(skipUpload);
 
     try {
-      let text: string;
+      let text: string | undefined;
       
       if (file.name.toLowerCase().endsWith('.csv')) {
         const reader = new FileReader();
@@ -36,31 +107,26 @@ export const useCSVProcessor = () => {
           reader.onerror = reject;
           reader.readAsText(file);
         });
+        setRawCSV(text);
+        processFileContent(text);
       } else {
         // Process Excel file
-        text = await processExcelFile(file);
+        const result = await processExcelFile(file);
+        if (result.sheets) {
+          // Multiple sheets found
+          setAvailableSheets(result.sheets);
+          setShowSheetSelector(true);
+          setPendingExcelFile(file);
+        } else if (result.csvContent) {
+          // Single sheet
+          text = result.csvContent;
+          setRawCSV(text);
+          processFileContent(text);
+        }
       }
 
-      setRawCSV(text);
-      const lines = text.split(/\r?\n/).filter(line => line.trim());
-      const headers = parseCSVLine(lines[0]);
-      setUploadedHeaders(headers);
-      
-      const data = lines.slice(1).map(line => {
-        const values = parseCSVLine(line);
-        return headers.reduce((obj: any, header, index) => {
-          obj[header] = values[index] || '';
-          return obj;
-        }, {});
-      });
-      setCsvData(data);
-
-      const autoMapped = autoMapFields(headers, shopifyFields);
-      setFieldMapping(autoMapped);
-      setIsAutoMapped(true);
-
-      // Upload the file to Supabase Storage if not skipping upload
-      if (!skipUpload) {
+      // Handle file upload for CSV files or single-sheet Excel files
+      if (!skipUpload && text) {
         const user = (await supabase.auth.getUser()).data.user;
         if (user) {
           const formData = new FormData();
@@ -81,10 +147,12 @@ export const useCSVProcessor = () => {
         }
       }
       
-      toast({
-        title: "Fields Auto-Mapped",
-        description: "Please review the field mappings and adjust if needed before downloading.",
-      });
+      if (text) {
+        toast({
+          title: "Fields Auto-Mapped",
+          description: "Please review the field mappings and adjust if needed before downloading.",
+        });
+      }
 
     } catch (error) {
       toast({
@@ -175,6 +243,9 @@ export const useCSVProcessor = () => {
     generateProcessedCSV,
     setFileName,
     rawCSV,
-    downloadFile
+    downloadFile,
+    availableSheets,
+    showSheetSelector,
+    handleSheetSelect,
   };
 };
