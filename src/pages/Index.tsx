@@ -29,7 +29,9 @@ const Index = () => {
     rawCSV,
     availableSheets,
     showSheetSelector,
+    setShowSheetSelector,
     handleSheetSelect,
+    downloadFile
   } = useCSVProcessor();
 
   useEffect(() => {

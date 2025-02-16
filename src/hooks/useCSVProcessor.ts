@@ -246,6 +246,7 @@ export const useCSVProcessor = () => {
     downloadFile,
     availableSheets,
     showSheetSelector,
+    setShowSheetSelector,
     handleSheetSelect,
   };
 };
