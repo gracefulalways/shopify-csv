@@ -10,7 +10,7 @@ export const downloadProcessedFile = (csv: string, fileName: string) => {
     downloadBlob(excelBlob, fileName);
   } else {
     // Download as CSV
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     downloadBlob(blob, fileName);
   }
 };

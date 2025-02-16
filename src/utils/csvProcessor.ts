@@ -1,5 +1,5 @@
 
-import { parseCSVLine } from "./csvUtils";
+import { parseCSVLine, escapeCSVValue } from "./csvUtils";
 import { autoMapFields, shopifyFields } from "./fieldMappingUtils";
 import { FieldMapping } from "@/types/csv";
 
@@ -30,7 +30,7 @@ export const generateProcessedCSV = (csvData: any[], fieldMapping: FieldMapping)
     shopifyFields.forEach(shopifyField => {
       const mappedField = fieldMapping[shopifyField];
       const value = mappedField && mappedField !== "" ? (row[mappedField] || '') : '';
-      processedRow[shopifyField] = value;
+      processedRow[shopifyField] = escapeCSVValue(value);
     });
     return processedRow;
   });
