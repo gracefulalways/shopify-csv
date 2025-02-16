@@ -53,20 +53,25 @@ export const VendorFilter = ({
     0
   );
 
+  const handleVendorFieldChange = (value: string) => {
+    // Convert "none" back to empty string for the parent component
+    onVendorFilterMapping(value === "none" ? "" : value);
+  };
+
   return (
     <Card className="p-6">
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">Filter by Vendor</h3>
           <Select
-            value={vendorFilterField}
-            onValueChange={onVendorFilterMapping}
+            value={vendorFilterField || "none"}
+            onValueChange={handleVendorFieldChange}
           >
             <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="Select vendor field..." />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">None (no filtering)</SelectItem>
+              <SelectItem value="none">None (no filtering)</SelectItem>
               {uploadedHeaders.map((header) => (
                 <SelectItem key={header} value={header}>
                   {header}
