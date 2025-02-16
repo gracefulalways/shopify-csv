@@ -4,7 +4,7 @@ import { toast } from "@/components/ui/use-toast";
 import { parseCSVLine, escapeCSVValue } from "@/utils/csvUtils";
 import { shopifyFields, autoMapFields } from "@/utils/fieldMappingUtils";
 import { saveMappingConfiguration } from "@/utils/mappingStorage";
-import { processExcelFile } from "@/utils/excelUtils";
+import { processExcelFile, convertCSVToExcel } from "@/utils/excelUtils";
 import { supabase } from "@/integrations/supabase/client";
 
 interface FieldMapping {
@@ -132,6 +132,35 @@ export const useCSVProcessor = () => {
     return csv;
   };
 
+  const downloadFile = () => {
+    const csv = generateProcessedCSV();
+    const isExcel = fileName.toLowerCase().endsWith('.xlsx');
+
+    if (isExcel) {
+      // Convert to Excel and download
+      const excelBlob = convertCSVToExcel(csv, fileName);
+      const url = window.URL.createObjectURL(excelBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } else {
+      // Download as CSV
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    }
+  };
+
   return {
     progress,
     isProcessing,
@@ -145,6 +174,7 @@ export const useCSVProcessor = () => {
     saveMappingConfiguration,
     generateProcessedCSV,
     setFileName,
-    rawCSV
+    rawCSV,
+    downloadFile
   };
 };

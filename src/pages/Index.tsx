@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,7 +50,7 @@ const Index = () => {
     processCSV(file, true); // Pass true to skip upload since we're loading an existing file
   };
 
-  const downloadProcessedFile = () => {
+  const downloadFile = () => {
     const csv = generateProcessedCSV();
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -95,7 +94,7 @@ const Index = () => {
         {Object.keys(fieldMapping).length > 0 && (
           <ActionButtons
             user={user}
-            onDownload={downloadProcessedFile}
+            onDownload={downloadFile}
             onSaveMapping={() => saveMappingConfiguration(user?.id, fileName, fieldMapping, rawCSV)}
           />
         )}

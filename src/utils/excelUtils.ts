@@ -1,5 +1,5 @@
 
-import { read, utils } from 'xlsx';
+import { read, utils, write } from 'xlsx';
 
 export const processExcelFile = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -24,5 +24,25 @@ export const processExcelFile = (file: File): Promise<string> => {
     
     reader.onerror = (error) => reject(error);
     reader.readAsBinaryString(file);
+  });
+};
+
+export const convertCSVToExcel = (csvContent: string, fileName: string): Blob => {
+  // Parse CSV to array of arrays
+  const rows = csvContent.split('\n').map(row => row.split(','));
+  
+  // Create worksheet
+  const ws = utils.aoa_to_sheet(rows);
+  
+  // Create workbook and append worksheet
+  const wb = utils.book_new();
+  utils.book_append_sheet(wb, ws, 'Sheet1');
+  
+  // Generate Excel file as array buffer
+  const excelBuffer = write(wb, { bookType: 'xlsx', type: 'array' });
+  
+  // Convert to Blob
+  return new Blob([excelBuffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   });
 };
