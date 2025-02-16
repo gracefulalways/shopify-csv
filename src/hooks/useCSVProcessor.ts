@@ -9,6 +9,8 @@ import { processFileContent, generateProcessedCSV } from "@/utils/csvProcessor";
 import { downloadProcessedFile } from "@/utils/fileDownloader";
 import { FieldMapping, CSVState } from "@/types/csv";
 
+const FILE_SIZE_WARNING_THRESHOLD = 5 * 1024 * 1024; // 5MB in bytes
+
 export const useCSVProcessor = () => {
   const [state, setState] = useState<CSVState>({
     progress: 0,
@@ -88,6 +90,16 @@ export const useCSVProcessor = () => {
   };
 
   const processCSV = async (file: File, skipUpload: boolean = false) => {
+    // Check file size and show warning if necessary
+    if (file.size > FILE_SIZE_WARNING_THRESHOLD) {
+      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
+      toast({
+        title: "Large File Detected",
+        description: `This file is ${fileSizeMB}MB. Processing may take longer than usual. Please be patient while we handle your file.`,
+        duration: 6000,
+      });
+    }
+
     setState(prev => ({
       ...prev,
       isProcessing: true,
