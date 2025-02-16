@@ -2,28 +2,27 @@
 import { Button } from "@/components/ui/button";
 import { Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 
 interface HeaderProps {
   user: any;
 }
 
 export const Header = ({ user }: HeaderProps) => {
+  const { toast } = useToast();
+
   const handleSignOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        throw error;
-      }
+      await supabase.auth.signOut();
+      // Clear any local session data
+      localStorage.removeItem('sb-zaliiftkyeqvapjkmaio-auth-token');
+      window.location.href = '/auth';
     } catch (error: any) {
       toast({
         title: "Error signing out",
         description: "Please try again or refresh the page.",
         variant: "destructive",
       });
-      // Force clear the session from localStorage as a fallback
-      localStorage.removeItem('supabase.auth.token');
-      window.location.reload();
     }
   };
 
