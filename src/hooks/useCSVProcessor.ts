@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { parseCSVLine, escapeCSVValue } from "@/utils/csvUtils";
@@ -22,6 +21,8 @@ export const useCSVProcessor = () => {
   const [rawCSV, setRawCSV] = useState<string>("");
   const [selectedVendors, setSelectedVendors] = useState<string[]>([]);
   const [vendorFilterField, setVendorFilterField] = useState<string>("");
+  const [chunks, setChunks] = useState<string[]>([]);
+  const [isLargeFile, setIsLargeFile] = useState(false);
 
   const getUniqueVendors = (): string[] => {
     if (!vendorFilterField) return [];
@@ -46,14 +47,14 @@ export const useCSVProcessor = () => {
     setIsProcessing(true);
     setProgress(0);
     
-    // Remove file extension and add CSV extension
     const baseFileName = file.name.replace(/\.[^/.]+$/, "");
     setFileName(`ShopifyCSV-${baseFileName}`);
-    setSelectedVendors([]); // Reset selected vendors when new file is uploaded
+    setSelectedVendors([]); // Reset selected vendors
     setVendorFilterField(""); // Reset vendor filter field
 
     try {
       let text: string;
+      let headers: string[];
       
       if (file.name.toLowerCase().endsWith('.csv')) {
         const reader = new FileReader();
@@ -62,24 +63,38 @@ export const useCSVProcessor = () => {
           reader.onerror = reject;
           reader.readAsText(file);
         });
+        setRawCSV(text);
+        const lines = text.split(/\r?\n/).filter(line => line.trim());
+        headers = parseCSVLine(lines[0]);
+        setUploadedHeaders(headers);
+        
+        const data = lines.slice(1).map(line => {
+          const values = parseCSVLine(line);
+          return headers.reduce((obj: any, header, index) => {
+            obj[header] = values[index] || '';
+            return obj;
+          }, {});
+        });
+        setCsvData(data);
       } else {
         // Process Excel file
-        text = await processExcelFile(file);
+        setIsLargeFile(file.size > 10 * 1024 * 1024);
+        const { headers: excelHeaders, chunks: excelChunks } = await processExcelFile(file);
+        headers = excelHeaders;
+        setUploadedHeaders(headers);
+        setChunks(excelChunks);
+        
+        // Process first chunk to show initial data
+        const firstChunkData = excelChunks[0].split('\n').map(line => {
+          const values = parseCSVLine(line);
+          return headers.reduce((obj: any, header, index) => {
+            obj[header] = values[index] || '';
+            return obj;
+          }, {});
+        });
+        setCsvData(firstChunkData);
+        setRawCSV(excelChunks.join('\n'));
       }
-
-      setRawCSV(text);
-      const lines = text.split(/\r?\n/).filter(line => line.trim());
-      const headers = parseCSVLine(lines[0]);
-      setUploadedHeaders(headers);
-      
-      const data = lines.slice(1).map(line => {
-        const values = parseCSVLine(line);
-        return headers.reduce((obj: any, header, index) => {
-          obj[header] = values[index] || '';
-          return obj;
-        }, {});
-      });
-      setCsvData(data);
 
       const autoMapped = autoMapFields(headers, shopifyFields);
       setFieldMapping(autoMapped);
@@ -94,7 +109,6 @@ export const useCSVProcessor = () => {
         setVendorFilterField(possibleVendorField);
       }
 
-      // Upload the file to Supabase Storage if not skipping upload
       if (!skipUpload) {
         const user = (await supabase.auth.getUser()).data.user;
         if (user) {
@@ -118,7 +132,9 @@ export const useCSVProcessor = () => {
       
       toast({
         title: "Fields Auto-Mapped",
-        description: "Please review the field mappings and adjust if needed before downloading.",
+        description: isLargeFile 
+          ? "Large file detected. Data is being processed in chunks for better performance."
+          : "Please review the field mappings and adjust if needed before downloading.",
       });
 
     } catch (error) {
@@ -127,18 +143,11 @@ export const useCSVProcessor = () => {
         description: "Failed to process file. Please make sure the file is a valid CSV or Excel file.",
         variant: "destructive",
       });
+      console.error('File processing error:', error);
     }
 
-    let currentProgress = 0;
-    const interval = setInterval(() => {
-      currentProgress += 10;
-      setProgress(currentProgress);
-      
-      if (currentProgress >= 100) {
-        clearInterval(interval);
-        setIsProcessing(false);
-      }
-    }, 500);
+    setProgress(100);
+    setIsProcessing(false);
   };
 
   const handleFieldMapping = (shopifyField: string, uploadedField: string) => {
@@ -154,24 +163,45 @@ export const useCSVProcessor = () => {
   };
 
   const generateProcessedCSV = () => {
-    const processedData = csvData
-      .filter(row => !vendorFilterField || selectedVendors.length === 0 || selectedVendors.includes(row[vendorFilterField]))
-      .map(row => {
-        const processedRow: { [key: string]: string } = {};
-        shopifyFields.forEach(shopifyField => {
-          const mappedField = fieldMapping[shopifyField];
-          const value = mappedField && mappedField !== "" ? (row[mappedField] || '') : '';
-          processedRow[shopifyField] = escapeCSVValue(value);
+    const processChunk = (data: any[]) => {
+      return data
+        .filter(row => !vendorFilterField || selectedVendors.length === 0 || selectedVendors.includes(row[vendorFilterField]))
+        .map(row => {
+          const processedRow: { [key: string]: string } = {};
+          shopifyFields.forEach(shopifyField => {
+            const mappedField = fieldMapping[shopifyField];
+            const value = mappedField && mappedField !== "" ? (row[mappedField] || '') : '';
+            processedRow[shopifyField] = escapeCSVValue(value);
+          });
+          return processedRow;
         });
-        return processedRow;
+    };
+
+    if (isLargeFile && chunks.length > 0) {
+      // Process chunks one at a time
+      const headers = shopifyFields.join(',');
+      const processedChunks = chunks.map(chunk => {
+        const chunkData = chunk.split('\n').map(line => {
+          const values = parseCSVLine(line);
+          return uploadedHeaders.reduce((obj: any, header, index) => {
+            obj[header] = values[index] || '';
+            return obj;
+          }, {});
+        });
+        return processChunk(chunkData)
+          .map(row => shopifyFields.map(field => row[field]).join(','))
+          .join('\n');
       });
-
-    const csv = [
-      shopifyFields.join(','),
-      ...processedData.map(row => shopifyFields.map(field => row[field]).join(','))
-    ].join('\n');
-
-    return csv;
+      
+      return [headers, ...processedChunks].join('\n');
+    } else {
+      // Process as before for smaller files
+      const processedData = processChunk(csvData);
+      return [
+        shopifyFields.join(','),
+        ...processedData.map(row => shopifyFields.map(field => row[field]).join(','))
+      ].join('\n');
+    }
   };
 
   return {
