@@ -10,11 +10,9 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ActionButtons } from "@/components/ActionButtons";
 import { SheetSelector } from "@/components/SheetSelector";
-import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
-  const navigate = useNavigate();
   const {
     progress,
     isProcessing,
@@ -37,26 +35,16 @@ const Index = () => {
   } = useCSVProcessor();
 
   useEffect(() => {
-    // Check authentication status on mount
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-    };
-    checkAuth();
+    });
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      const newUser = session?.user ?? null;
-      setUser(newUser);
-      
-      if (!newUser) {
-        // If user signed out, redirect to auth page
-        navigate('/auth');
-      }
+      setUser(session?.user ?? null);
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, []);
 
   const handleMappingSelect = (mapping: any) => {
     Object.entries(mapping.mapping_config).forEach(([shopifyField, uploadedField]) => {
@@ -68,13 +56,6 @@ const Index = () => {
     const file = new File([blob], mapping.original_filename, { type: 'text/csv' });
     processCSV(file, true); // Pass true to skip upload since we're loading an existing file
   };
-
-  // Protected route - if no user, redirect to auth
-  useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-    }
-  }, [user, navigate]);
 
   return (
     <div className="min-h-screen p-8 bg-gray-50">

@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 
 const Auth = () => {
@@ -13,17 +13,14 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   useEffect(() => {
     // Check if user is already logged in
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         navigate('/');
       }
-    };
-    checkSession();
+    });
   }, [navigate]);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -32,33 +29,22 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
-        const { data, error } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: {
-            emailRedirectTo: window.location.origin,
-          }
         });
         if (error) throw error;
-        
         toast({
           title: "Success",
           description: "Please check your email for the confirmation link.",
         });
-
-        if (data.session) {
-          navigate('/');
-        }
       } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
-        
-        if (data.session) {
-          navigate('/');
-        }
+        navigate('/');
       }
     } catch (error: any) {
       toast({
