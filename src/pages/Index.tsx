@@ -9,14 +9,9 @@ import { useCSVProcessor } from "@/hooks/useCSVProcessor";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ActionButtons } from "@/components/ActionButtons";
-import { useNavigate } from "react-router-dom";
-import { toast } from "@/components/ui/use-toast";
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-  
   const {
     progress,
     isProcessing,
@@ -34,44 +29,16 @@ const Index = () => {
   } = useCSVProcessor();
 
   useEffect(() => {
-    // Initial session check
-    const checkSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw error;
-        setUser(session?.user ?? null);
-        if (!session?.user) {
-          // Only redirect if we're sure there's no session
-          navigate('/auth');
-        }
-      } catch (error: any) {
-        console.error('Error checking session:', error.message);
-        toast({
-          title: "Authentication Error",
-          description: "Please try signing in again.",
-          variant: "destructive",
-        });
-        navigate('/auth');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkSession();
-
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      if (!session?.user) {
-        navigate('/auth');
-      }
     });
 
-    // Cleanup subscription
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [navigate]);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleMappingSelect = (mapping: any) => {
     Object.entries(mapping.mapping_config).forEach(([shopifyField, uploadedField]) => {
@@ -97,12 +64,6 @@ const Index = () => {
     link.click();
     document.body.removeChild(link);
   };
-
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">
-      <p>Loading...</p>
-    </div>;
-  }
 
   return (
     <div className="min-h-screen p-8 bg-gray-50">
