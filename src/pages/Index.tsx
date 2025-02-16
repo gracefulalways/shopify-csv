@@ -9,12 +9,6 @@ import { useCSVProcessor } from "@/hooks/useCSVProcessor";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ActionButtons } from "@/components/ActionButtons";
-import { VendorFilter } from "@/components/VendorFilter";
-import { SheetSelector } from "@/components/SheetSelector";
-import { useProcessingConfig } from "@/hooks/useProcessingConfig";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
@@ -31,19 +25,8 @@ const Index = () => {
     saveMappingConfiguration,
     generateProcessedCSV,
     setFileName,
-    rawCSV,
-    getUniqueVendors,
-    getProductCountByVendor,
-    selectedVendors,
-    setSelectedVendors,
-    vendorFilterField,
-    handleVendorFilterMapping,
-    showSheetSelector,
-    availableSheets,
-    handleSheetSelect
+    rawCSV
   } = useCSVProcessor();
-
-  const { config, saveConfig, isLoading: isConfigLoading } = useProcessingConfig();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -70,21 +53,14 @@ const Index = () => {
 
   const downloadProcessedFile = () => {
     const csv = generateProcessedCSV();
-    // Ensure proper CSV MIME type
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    
-    // Always use .csv extension for the output file
-    const baseFileName = fileName.replace(/\.[^/.]+$/, ""); // Remove any existing extension
-    const downloadFileName = `${baseFileName}.csv`;
-    
-    link.setAttribute('download', downloadFileName);
+    link.setAttribute('download', fileName);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    window.URL.revokeObjectURL(url); // Clean up the URL object
   };
 
   return (
@@ -93,46 +69,9 @@ const Index = () => {
         <Header user={user} />
 
         {user && (
-          <>
-            <Card className="p-6 mb-6">
-              <MappingList onSelect={handleMappingSelect} />
-            </Card>
-
-            <Card className="p-6 mb-6">
-              <h3 className="text-lg font-semibold mb-4">Processing Configuration</h3>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="brandName">Brand Name Filter</Label>
-                    <Input
-                      id="brandName"
-                      placeholder="Enter brand name..."
-                      value={config.brandName}
-                      onChange={(e) => saveConfig({ brandName: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="weightAdjustment">Weight Adjustment (lbs)</Label>
-                    <Input
-                      id="weightAdjustment"
-                      type="number"
-                      step="0.1"
-                      value={config.weightAdjustment}
-                      onChange={(e) => saveConfig({ weightAdjustment: parseFloat(e.target.value) })}
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="nationwide"
-                    checked={config.includeNationwideShipping}
-                    onCheckedChange={(checked) => saveConfig({ includeNationwideShipping: checked })}
-                  />
-                  <Label htmlFor="nationwide">Include "Nationwide Shipping" in descriptions</Label>
-                </div>
-              </div>
-            </Card>
-          </>
+          <Card className="p-6 mb-6">
+            <MappingList onSelect={handleMappingSelect} />
+          </Card>
         )}
         
         <Card className="p-6 mb-6">
@@ -151,18 +90,6 @@ const Index = () => {
             onSaveMapping={() => saveMappingConfiguration(user?.id, fileName, fieldMapping, rawCSV)}
             user={user}
           />
-
-          <div className="mt-6">
-            <VendorFilter
-              vendors={getUniqueVendors()}
-              selectedVendors={selectedVendors}
-              onVendorSelection={setSelectedVendors}
-              productCountByVendor={getProductCountByVendor()}
-              uploadedHeaders={uploadedHeaders}
-              vendorFilterField={vendorFilterField}
-              onVendorFilterMapping={handleVendorFilterMapping}
-            />
-          </div>
         </Card>
 
         {Object.keys(fieldMapping).length > 0 && (
@@ -172,12 +99,6 @@ const Index = () => {
             onSaveMapping={() => saveMappingConfiguration(user?.id, fileName, fieldMapping, rawCSV)}
           />
         )}
-
-        <SheetSelector
-          sheets={availableSheets}
-          onSheetSelect={handleSheetSelect}
-          isOpen={showSheetSelector}
-        />
 
         <Footer />
       </div>
