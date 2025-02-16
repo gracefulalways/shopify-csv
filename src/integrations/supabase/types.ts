@@ -45,6 +45,36 @@ export type Database = {
         }
         Relationships: []
       }
+      processing_configs: {
+        Row: {
+          brand_name: string | null
+          created_at: string | null
+          id: string
+          include_nationwide_shipping: boolean | null
+          updated_at: string | null
+          user_id: string
+          weight_adjustment: number | null
+        }
+        Insert: {
+          brand_name?: string | null
+          created_at?: string | null
+          id?: string
+          include_nationwide_shipping?: boolean | null
+          updated_at?: string | null
+          user_id: string
+          weight_adjustment?: number | null
+        }
+        Update: {
+          brand_name?: string | null
+          created_at?: string | null
+          id?: string
+          include_nationwide_shipping?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+          weight_adjustment?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       user_file_count: {
