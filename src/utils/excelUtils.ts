@@ -1,5 +1,5 @@
 
-import { read, utils, WorkBook } from 'xlsx';
+import { read, utils, write, WorkBook } from 'xlsx';
 
 interface ExcelProcessingResult {
   sheets?: string[];
@@ -61,28 +61,33 @@ const processWorkbookSheet = (workbook: WorkBook, sheetName: string): string => 
   const totalRows = range.e.r + 1;
   
   // Process headers first
-  const headers = utils.sheet_to_csv(sheet, {
-    range: { s: { r: 0, c: 0 }, e: { r: 0, c: range.e.c } },
-    FS: ',',
-    RS: '\n',
-    forceQuotes: true
-  });
+  const headerRowData = utils.sheet_to_json(sheet, { 
+    header: 1,
+    range: 0
+  })[0];
+  const headers = headerRowData.map((header: any) => 
+    typeof header === 'string' ? `"${header}"` : `"${String(header)}"`
+  ).join(',');
   
   // Process the rest of the data in chunks
   let csvContent = headers;
+  
+  // Process each chunk of rows
   for (let startRow = 1; startRow < totalRows; startRow += CHUNK_SIZE) {
     const endRow = Math.min(startRow + CHUNK_SIZE - 1, totalRows - 1);
-    const chunkRange = {
-      s: { r: startRow, c: 0 },
-      e: { r: endRow, c: range.e.c }
-    };
     
-    const chunkCsv = utils.sheet_to_csv(sheet, {
-      range: chunkRange,
-      FS: ',',
-      RS: '\n',
-      forceQuotes: true
+    const chunkData = utils.sheet_to_json(sheet, {
+      header: 1,
+      range: startRow // This will start from the row we want
     });
+    
+    // Convert chunk data to CSV format with proper quoting
+    const chunkCsv = chunkData.map(row => {
+      return (row as any[]).map(cell => {
+        if (cell === null || cell === undefined) return '""';
+        return `"${String(cell).replace(/"/g, '""')}"`;
+      }).join(',');
+    }).join('\n');
     
     if (chunkCsv.trim()) {
       csvContent += '\n' + chunkCsv;
@@ -95,7 +100,9 @@ const processWorkbookSheet = (workbook: WorkBook, sheetName: string): string => 
 export const convertCSVToExcel = (csvContent: string, fileName: string): Blob => {
   // Process CSV in chunks when converting back to Excel
   const rows = csvContent.split('\n');
-  const headers = rows[0].split(',');
+  const headers = rows[0].split(',').map(header => 
+    header.replace(/^"(.*)"$/, '$1').replace(/""/g, '"')
+  );
   
   const chunks = [];
   for (let i = 1; i < rows.length; i += CHUNK_SIZE) {
@@ -106,8 +113,12 @@ export const convertCSVToExcel = (csvContent: string, fileName: string): Blob =>
   const ws = utils.aoa_to_sheet([headers]);
   
   // Process chunks
-  chunks.forEach((chunk, index) => {
-    const chunkData = chunk.map(row => row.split(','));
+  chunks.forEach((chunk) => {
+    const chunkData = chunk.map(row => 
+      row.split(',').map(cell => 
+        cell.replace(/^"(.*)"$/, '$1').replace(/""/g, '"')
+      )
+    );
     utils.sheet_add_aoa(ws, chunkData, { origin: -1 });
   });
   
