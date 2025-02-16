@@ -1,87 +1,82 @@
 
+import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
-import { shopifyFields } from "@/utils/fieldMappingUtils";
+import { parseCSVLine, escapeCSVValue } from "@/utils/csvUtils";
+import { shopifyFields, autoMapFields } from "@/utils/fieldMappingUtils";
 import { saveMappingConfiguration } from "@/utils/mappingStorage";
 import { processExcelFile } from "@/utils/excelUtils";
-import { processFileContent, generateProcessedCSV } from "@/utils/csvProcessor";
-import { downloadProcessedFile } from "@/utils/fileDownloader";
-import { useCSVState } from "./useCSVState";
-import { useSheetProcessor } from "./useSheetProcessor";
-import { checkFileSize, handleFileUpload } from "@/utils/fileUploadHandler";
+import { supabase } from "@/integrations/supabase/client";
+
+interface FieldMapping {
+  [key: string]: string;
+}
 
 export const useCSVProcessor = () => {
-  const {
-    state,
-    updateState,
-    updateFieldMapping,
-    setFileName,
-    setShowSheetSelector,
-    updateProgress,
-    setProcessing
-  } = useCSVState();
-
-  const { handleSheetSelect: processSheet } = useSheetProcessor(updateState);
-
-  const handleSheetSelect = async (sheetName: string) => {
-    await processSheet(state.pendingExcelFile, sheetName, state.skipUploadFlag);
-  };
+  const [progress, setProgress] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [uploadedHeaders, setUploadedHeaders] = useState<string[]>([]);
+  const [fieldMapping, setFieldMapping] = useState<FieldMapping>({});
+  const [csvData, setCsvData] = useState<any[]>([]);
+  const [isAutoMapped, setIsAutoMapped] = useState(false);
+  const [fileName, setFileName] = useState<string>("");
+  const [rawCSV, setRawCSV] = useState<string>("");
 
   const processCSV = async (file: File, skipUpload: boolean = false) => {
-    checkFileSize(file);
-
-    updateState({
-      isProcessing: true,
-      progress: 0,
-      fileName: `ShopifyCSV-${file.name}`,
-      skipUploadFlag: skipUpload,
-    });
+    setIsProcessing(true);
+    setProgress(0);
+    setFileName(`ShopifyCSV-${file.name}`);
 
     try {
+      let text: string;
+      
       if (file.name.toLowerCase().endsWith('.csv')) {
         const reader = new FileReader();
-        const text = await new Promise<string>((resolve, reject) => {
+        text = await new Promise((resolve, reject) => {
           reader.onload = (e) => resolve(e.target?.result as string);
           reader.onerror = reject;
           reader.readAsText(file);
         });
-
-        const { headers, data, autoMapped } = processFileContent(text);
-        updateState({
-          rawCSV: text,
-          uploadedHeaders: headers,
-          csvData: data,
-          fieldMapping: autoMapped,
-          isAutoMapped: true,
-        });
-
-        if (!skipUpload) {
-          await handleFileUpload(file);
-        }
-
       } else {
         // Process Excel file
-        const result = await processExcelFile(file);
-        if (result.sheets) {
-          // Multiple sheets found
-          updateState({
-            availableSheets: result.sheets,
-            showSheetSelector: true,
-            pendingExcelFile: file,
-          });
-          return;
-        } else if (result.csvContent) {
-          // Single sheet
-          const { headers, data, autoMapped } = processFileContent(result.csvContent);
-          updateState({
-            rawCSV: result.csvContent,
-            uploadedHeaders: headers,
-            csvData: data,
-            fieldMapping: autoMapped,
-            isAutoMapped: true,
+        text = await processExcelFile(file);
+      }
+
+      setRawCSV(text);
+      const lines = text.split(/\r?\n/).filter(line => line.trim());
+      const headers = parseCSVLine(lines[0]);
+      setUploadedHeaders(headers);
+      
+      const data = lines.slice(1).map(line => {
+        const values = parseCSVLine(line);
+        return headers.reduce((obj: any, header, index) => {
+          obj[header] = values[index] || '';
+          return obj;
+        }, {});
+      });
+      setCsvData(data);
+
+      const autoMapped = autoMapFields(headers, shopifyFields);
+      setFieldMapping(autoMapped);
+      setIsAutoMapped(true);
+
+      // Upload the file to Supabase Storage if not skipping upload
+      if (!skipUpload) {
+        const user = (await supabase.auth.getUser()).data.user;
+        if (user) {
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('userId', user.id);
+
+          const response = await supabase.functions.invoke('upload-csv', {
+            body: formData,
           });
 
-          if (!skipUpload) {
-            await handleFileUpload(file);
+          if (response.error) {
+            toast({
+              title: "Error",
+              description: "Failed to upload file. Your mapping will still work but won't be saved for later use.",
+              variant: "destructive",
+            });
           }
         }
       }
@@ -102,30 +97,54 @@ export const useCSVProcessor = () => {
     let currentProgress = 0;
     const interval = setInterval(() => {
       currentProgress += 10;
-      updateProgress(currentProgress);
+      setProgress(currentProgress);
       
       if (currentProgress >= 100) {
         clearInterval(interval);
-        setProcessing(false);
+        setIsProcessing(false);
       }
     }, 500);
   };
 
-  const downloadFile = () => {
-    const csv = generateProcessedCSV(state.csvData, state.fieldMapping);
-    downloadProcessedFile(csv, state.fileName);
+  const handleFieldMapping = (shopifyField: string, uploadedField: string) => {
+    setFieldMapping(prev => ({
+      ...prev,
+      [shopifyField]: uploadedField
+    }));
+  };
+
+  const generateProcessedCSV = () => {
+    const processedData = csvData.map(row => {
+      const processedRow: { [key: string]: string } = {};
+      shopifyFields.forEach(shopifyField => {
+        const mappedField = fieldMapping[shopifyField];
+        const value = mappedField && mappedField !== "" ? (row[mappedField] || '') : '';
+        processedRow[shopifyField] = escapeCSVValue(value);
+      });
+      return processedRow;
+    });
+
+    const csv = [
+      shopifyFields.join(','),
+      ...processedData.map(row => shopifyFields.map(field => row[field]).join(','))
+    ].join('\n');
+
+    return csv;
   };
 
   return {
-    ...state,
+    progress,
+    isProcessing,
+    uploadedHeaders,
+    fieldMapping,
+    isAutoMapped,
+    fileName,
+    shopifyFields,
     processCSV,
-    handleFieldMapping: updateFieldMapping,
+    handleFieldMapping,
     saveMappingConfiguration,
     generateProcessedCSV,
     setFileName,
-    setShowSheetSelector,
-    handleSheetSelect,
-    downloadFile,
-    shopifyFields,
+    rawCSV
   };
 };

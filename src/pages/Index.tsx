@@ -9,7 +9,6 @@ import { useCSVProcessor } from "@/hooks/useCSVProcessor";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ActionButtons } from "@/components/ActionButtons";
-import { SheetSelector } from "@/components/SheetSelector";
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
@@ -26,12 +25,7 @@ const Index = () => {
     saveMappingConfiguration,
     generateProcessedCSV,
     setFileName,
-    rawCSV,
-    availableSheets,
-    showSheetSelector,
-    setShowSheetSelector,
-    handleSheetSelect,
-    downloadFile
+    rawCSV
   } = useCSVProcessor();
 
   useEffect(() => {
@@ -55,6 +49,18 @@ const Index = () => {
     const blob = new Blob([mapping.csv_content], { type: 'text/csv' });
     const file = new File([blob], mapping.original_filename, { type: 'text/csv' });
     processCSV(file, true); // Pass true to skip upload since we're loading an existing file
+  };
+
+  const downloadProcessedFile = () => {
+    const csv = generateProcessedCSV();
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -89,17 +95,10 @@ const Index = () => {
         {Object.keys(fieldMapping).length > 0 && (
           <ActionButtons
             user={user}
-            onDownload={downloadFile}
+            onDownload={downloadProcessedFile}
             onSaveMapping={() => saveMappingConfiguration(user?.id, fileName, fieldMapping, rawCSV)}
           />
         )}
-
-        <SheetSelector
-          sheets={availableSheets}
-          isOpen={showSheetSelector}
-          onClose={() => setShowSheetSelector(false)}
-          onSheetSelect={handleSheetSelect}
-        />
 
         <Footer />
       </div>
