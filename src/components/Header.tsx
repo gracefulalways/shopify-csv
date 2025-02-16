@@ -17,10 +17,7 @@ export const Header = ({ user }: HeaderProps) => {
         </div>
         <p className="text-lg text-gray-600">Upload. Format. Sell.</p>
         <p className="mt-4 text-gray-600 max-w-2xl mx-auto">
-          ShopifyCSV.app makes it effortless to convert your inventory files into Shopify-ready CSVs. 
-          Simply upload your file, let our tool format it to meet Shopify's exact requirements, and 
-          download your ready-to-use CSV in seconds. No manual edits, no hassle. Just a seamless way 
-          to get your products online faster.
+          ShopifyCSV.app makes it effortless to convert your inventory files into Shopify-ready CSVs. Simply upload your file (CSV or Excel), let our tool format it to meet Shopify's exact requirements, and download your ready-to-use CSV in seconds. No manual edits, no hassle. Just a seamless way to get your products online faster.
         </p>
       </div>
       
