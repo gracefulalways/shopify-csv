@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
-import { escapeCSVValue } from "@/utils/csvUtils";
+import { escapeCSVValue, parseCSVLine } from "@/utils/csvUtils"; // Added parseCSVLine import
 import { shopifyFields } from "@/utils/fieldMappingUtils";
 import { saveMappingConfiguration } from "@/utils/mappingStorage";
 import { supabase } from "@/integrations/supabase/client";
