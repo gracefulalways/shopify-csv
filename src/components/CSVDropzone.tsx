@@ -20,14 +20,16 @@ export const CSVDropzone = ({ onFileProcess, isProcessing, progress }: CSVDropzo
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'text/csv': ['.csv']
+      'text/csv': ['.csv'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'application/vnd.ms-excel': ['.xls']
     },
     maxFiles: 1
   });
 
   return (
     <div className="mb-6">
-      <h2 className="text-xl font-semibold mb-2">Upload Your CSV</h2>
+      <h2 className="text-xl font-semibold mb-2">Upload Your File</h2>
       <div
         {...getRootProps()}
         className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
@@ -35,11 +37,11 @@ export const CSVDropzone = ({ onFileProcess, isProcessing, progress }: CSVDropzo
       >
         <input {...getInputProps()} />
         {isDragActive ? (
-          <p className="text-lg">Drop the CSV file here...</p>
+          <p className="text-lg">Drop the file here...</p>
         ) : (
           <div>
-            <p className="text-lg mb-2">Drag & drop a CSV file here, or click to select</p>
-            <p className="text-sm text-gray-500">Only .csv files are accepted</p>
+            <p className="text-lg mb-2">Drag & drop a file here, or click to select</p>
+            <p className="text-sm text-gray-500">Accepts .csv, .xlsx, and .xls files</p>
           </div>
         )}
       </div>

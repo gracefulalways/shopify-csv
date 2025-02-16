@@ -24,17 +24,30 @@ serve(async (req) => {
       )
     }
 
+    // Check file type
+    const fileName = (file as File).name.toLowerCase();
+    const isValidType = fileName.endsWith('.csv') || 
+                       fileName.endsWith('.xlsx') || 
+                       fileName.endsWith('.xls');
+
+    if (!isValidType) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid file type. Only CSV and Excel files are accepted.' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const filePath = `${userId}/${crypto.randomUUID()}.csv`
+    const filePath = `${userId}/${crypto.randomUUID()}.${fileName.split('.').pop()}`
 
     const { data, error: uploadError } = await supabase.storage
       .from('csv_files')
       .upload(filePath, file, {
-        contentType: 'text/csv',
+        contentType: file.type,
         upsert: false
       })
 

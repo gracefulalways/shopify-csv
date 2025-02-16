@@ -4,6 +4,7 @@ import { toast } from "@/components/ui/use-toast";
 import { parseCSVLine, escapeCSVValue } from "@/utils/csvUtils";
 import { shopifyFields, autoMapFields } from "@/utils/fieldMappingUtils";
 import { saveMappingConfiguration } from "@/utils/mappingStorage";
+import { processExcelFile } from "@/utils/excelUtils";
 import { supabase } from "@/integrations/supabase/client";
 
 interface FieldMapping {
@@ -25,9 +26,21 @@ export const useCSVProcessor = () => {
     setProgress(0);
     setFileName(`ShopifyCSV-${file.name}`);
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const text = e.target?.result as string;
+    try {
+      let text: string;
+      
+      if (file.name.toLowerCase().endsWith('.csv')) {
+        const reader = new FileReader();
+        text = await new Promise((resolve, reject) => {
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.onerror = reject;
+          reader.readAsText(file);
+        });
+      } else {
+        // Process Excel file
+        text = await processExcelFile(file);
+      }
+
       setRawCSV(text);
       const lines = text.split(/\r?\n/).filter(line => line.trim());
       const headers = parseCSVLine(lines[0]);
@@ -72,10 +85,15 @@ export const useCSVProcessor = () => {
         title: "Fields Auto-Mapped",
         description: "Please review the field mappings and adjust if needed before downloading.",
       });
-    };
 
-    reader.readAsText(file);
-    
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to process file. Please make sure the file is a valid CSV or Excel file.",
+        variant: "destructive",
+      });
+    }
+
     let currentProgress = 0;
     const interval = setInterval(() => {
       currentProgress += 10;
