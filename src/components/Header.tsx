@@ -2,7 +2,8 @@
 import { Button } from "@/components/ui/button";
 import { Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface HeaderProps {
   user: any;
@@ -10,17 +11,20 @@ interface HeaderProps {
 
 export const Header = ({ user }: HeaderProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
-      // Clear any local session data
-      localStorage.removeItem('sb-zaliiftkyeqvapjkmaio-auth-token');
-      window.location.href = '/auth';
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      // Navigate to auth page after successful sign out
+      navigate('/auth');
     } catch (error: any) {
+      console.error('Sign out error:', error);
       toast({
         title: "Error signing out",
-        description: "Please try again or refresh the page.",
+        description: error.message || "Please try again or refresh the page.",
         variant: "destructive",
       });
     }
@@ -46,7 +50,7 @@ export const Header = ({ user }: HeaderProps) => {
         {!user ? (
           <Button
             variant="outline"
-            onClick={() => window.location.href = '/auth'}
+            onClick={() => navigate('/auth')}
           >
             Sign In to Save File
           </Button>
