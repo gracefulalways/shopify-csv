@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { parseCSVLine, escapeCSVValue } from "@/utils/csvUtils";
@@ -46,7 +45,10 @@ export const useCSVProcessor = () => {
   const processCSV = async (file: File, skipUpload: boolean = false) => {
     setIsProcessing(true);
     setProgress(0);
-    setFileName(`ShopifyCSV-${file.name}`);
+    
+    // Remove file extension and add CSV extension
+    const baseFileName = file.name.replace(/\.[^/.]+$/, "");
+    setFileName(`ShopifyCSV-${baseFileName}`);
     setSelectedVendors([]); // Reset selected vendors when new file is uploaded
 
     try {

@@ -58,14 +58,21 @@ const Index = () => {
 
   const downloadProcessedFile = () => {
     const csv = generateProcessedCSV();
-    const blob = new Blob([csv], { type: 'text/csv' });
+    // Ensure proper CSV MIME type
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', fileName);
+    
+    // Always use .csv extension for the output file
+    const baseFileName = fileName.replace(/\.[^/.]+$/, ""); // Remove any existing extension
+    const downloadFileName = `${baseFileName}.csv`;
+    
+    link.setAttribute('download', downloadFileName);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    window.URL.revokeObjectURL(url); // Clean up the URL object
   };
 
   // Only show vendor filter if Vendor field is mapped
