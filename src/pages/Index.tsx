@@ -11,6 +11,10 @@ import { Footer } from "@/components/Footer";
 import { ActionButtons } from "@/components/ActionButtons";
 import { VendorFilter } from "@/components/VendorFilter";
 import { SheetSelector } from "@/components/SheetSelector";
+import { useProcessingConfig } from "@/hooks/useProcessingConfig";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
@@ -38,6 +42,8 @@ const Index = () => {
     availableSheets,
     handleSheetSelect
   } = useCSVProcessor();
+
+  const { config, saveConfig, isLoading: isConfigLoading } = useProcessingConfig();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -87,9 +93,46 @@ const Index = () => {
         <Header user={user} />
 
         {user && (
-          <Card className="p-6 mb-6">
-            <MappingList onSelect={handleMappingSelect} />
-          </Card>
+          <>
+            <Card className="p-6 mb-6">
+              <MappingList onSelect={handleMappingSelect} />
+            </Card>
+
+            <Card className="p-6 mb-6">
+              <h3 className="text-lg font-semibold mb-4">Processing Configuration</h3>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="brandName">Brand Name Filter</Label>
+                    <Input
+                      id="brandName"
+                      placeholder="Enter brand name..."
+                      value={config.brandName}
+                      onChange={(e) => saveConfig({ brandName: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="weightAdjustment">Weight Adjustment (lbs)</Label>
+                    <Input
+                      id="weightAdjustment"
+                      type="number"
+                      step="0.1"
+                      value={config.weightAdjustment}
+                      onChange={(e) => saveConfig({ weightAdjustment: parseFloat(e.target.value) })}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="nationwide"
+                    checked={config.includeNationwideShipping}
+                    onCheckedChange={(checked) => saveConfig({ includeNationwideShipping: checked })}
+                  />
+                  <Label htmlFor="nationwide">Include "Nationwide Shipping" in descriptions</Label>
+                </div>
+              </div>
+            </Card>
+          </>
         )}
         
         <Card className="p-6 mb-6">
