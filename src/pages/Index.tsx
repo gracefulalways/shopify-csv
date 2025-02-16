@@ -57,7 +57,9 @@ const Index = () => {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', fileName);
+    // Always use .csv extension for the downloaded file
+    const downloadFileName = fileName.replace(/\.[^/.]+$/, '') + '.csv';
+    link.setAttribute('download', downloadFileName);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
