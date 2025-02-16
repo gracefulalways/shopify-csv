@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { parseCSVLine, escapeCSVValue } from "@/utils/csvUtils";
@@ -20,21 +21,20 @@ export const useCSVProcessor = () => {
   const [fileName, setFileName] = useState<string>("");
   const [rawCSV, setRawCSV] = useState<string>("");
   const [selectedVendors, setSelectedVendors] = useState<string[]>([]);
+  const [vendorFilterField, setVendorFilterField] = useState<string>("");
 
   const getUniqueVendors = (): string[] => {
-    const vendorField = fieldMapping["Vendor"];
-    if (!vendorField) return [];
+    if (!vendorFilterField) return [];
     
-    const vendors = new Set(csvData.map(row => row[vendorField]));
+    const vendors = new Set(csvData.map(row => row[vendorFilterField]));
     return Array.from(vendors).filter(Boolean).sort();
   };
 
   const getProductCountByVendor = (): { [key: string]: number } => {
-    const vendorField = fieldMapping["Vendor"];
-    if (!vendorField) return {};
+    if (!vendorFilterField) return {};
     
     return csvData.reduce((acc: { [key: string]: number }, row) => {
-      const vendor = row[vendorField];
+      const vendor = row[vendorFilterField];
       if (vendor) {
         acc[vendor] = (acc[vendor] || 0) + 1;
       }
@@ -50,6 +50,7 @@ export const useCSVProcessor = () => {
     const baseFileName = file.name.replace(/\.[^/.]+$/, "");
     setFileName(`ShopifyCSV-${baseFileName}`);
     setSelectedVendors([]); // Reset selected vendors when new file is uploaded
+    setVendorFilterField(""); // Reset vendor filter field
 
     try {
       let text: string;
@@ -83,6 +84,15 @@ export const useCSVProcessor = () => {
       const autoMapped = autoMapFields(headers, shopifyFields);
       setFieldMapping(autoMapped);
       setIsAutoMapped(true);
+
+      // Try to auto-map vendor filter field
+      const vendorKeywords = ['vendor', 'supplier', 'manufacturer', 'brand'];
+      const possibleVendorField = headers.find(header => 
+        vendorKeywords.some(keyword => header.toLowerCase().includes(keyword))
+      );
+      if (possibleVendorField) {
+        setVendorFilterField(possibleVendorField);
+      }
 
       // Upload the file to Supabase Storage if not skipping upload
       if (!skipUpload) {
@@ -136,17 +146,16 @@ export const useCSVProcessor = () => {
       ...prev,
       [shopifyField]: uploadedField
     }));
+  };
 
-    // Reset selected vendors when vendor field mapping changes
-    if (shopifyField === "Vendor") {
-      setSelectedVendors([]);
-    }
+  const handleVendorFilterMapping = (field: string) => {
+    setVendorFilterField(field);
+    setSelectedVendors([]); // Reset selected vendors when mapping changes
   };
 
   const generateProcessedCSV = () => {
-    const vendorField = fieldMapping["Vendor"];
     const processedData = csvData
-      .filter(row => !vendorField || selectedVendors.length === 0 || selectedVendors.includes(row[vendorField]))
+      .filter(row => !vendorFilterField || selectedVendors.length === 0 || selectedVendors.includes(row[vendorFilterField]))
       .map(row => {
         const processedRow: { [key: string]: string } = {};
         shopifyFields.forEach(shopifyField => {
@@ -182,6 +191,8 @@ export const useCSVProcessor = () => {
     getUniqueVendors,
     getProductCountByVendor,
     selectedVendors,
-    setSelectedVendors
+    setSelectedVendors,
+    vendorFilterField,
+    handleVendorFilterMapping
   };
 };

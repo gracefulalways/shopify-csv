@@ -30,7 +30,9 @@ const Index = () => {
     getUniqueVendors,
     getProductCountByVendor,
     selectedVendors,
-    setSelectedVendors
+    setSelectedVendors,
+    vendorFilterField,
+    handleVendorFilterMapping
   } = useCSVProcessor();
 
   useEffect(() => {
@@ -75,9 +77,6 @@ const Index = () => {
     window.URL.revokeObjectURL(url); // Clean up the URL object
   };
 
-  // Only show vendor filter if Vendor field is mapped
-  const showVendorFilter = Boolean(fieldMapping["Vendor"]);
-
   return (
     <div className="min-h-screen p-8 bg-gray-50">
       <div className="max-w-3xl mx-auto">
@@ -106,16 +105,17 @@ const Index = () => {
             user={user}
           />
 
-          {showVendorFilter && (
-            <div className="mt-6">
-              <VendorFilter
-                vendors={getUniqueVendors()}
-                selectedVendors={selectedVendors}
-                onVendorSelection={setSelectedVendors}
-                productCountByVendor={getProductCountByVendor()}
-              />
-            </div>
-          )}
+          <div className="mt-6">
+            <VendorFilter
+              vendors={getUniqueVendors()}
+              selectedVendors={selectedVendors}
+              onVendorSelection={setSelectedVendors}
+              productCountByVendor={getProductCountByVendor()}
+              uploadedHeaders={uploadedHeaders}
+              vendorFilterField={vendorFilterField}
+              onVendorFilterMapping={handleVendorFilterMapping}
+            />
+          </div>
         </Card>
 
         {Object.keys(fieldMapping).length > 0 && (
