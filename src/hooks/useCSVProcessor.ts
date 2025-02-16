@@ -23,6 +23,9 @@ export const useCSVProcessor = () => {
   const [vendorFilterField, setVendorFilterField] = useState<string>("");
   const [chunks, setChunks] = useState<string[]>([]);
   const [isLargeFile, setIsLargeFile] = useState(false);
+  const [availableSheets, setAvailableSheets] = useState<Array<{ name: string; rowCount: number }>>([]);
+  const [showSheetSelector, setShowSheetSelector] = useState(false);
+  const [currentFile, setCurrentFile] = useState<File | null>(null);
 
   const getUniqueVendors = (): string[] => {
     if (!vendorFilterField) return [];
@@ -43,7 +46,7 @@ export const useCSVProcessor = () => {
     }, {});
   };
 
-  const processCSV = async (file: File, skipUpload: boolean = false) => {
+  const processCSV = async (file: File, skipUpload: boolean = false, selectedSheet?: string) => {
     setIsProcessing(true);
     setProgress(0);
     
@@ -79,7 +82,27 @@ export const useCSVProcessor = () => {
       } else {
         // Process Excel file
         setIsLargeFile(file.size > 10 * 1024 * 1024);
-        const { headers: excelHeaders, chunks: excelChunks } = await processExcelFile(file);
+        
+        // If no sheet is selected, get the sheet list first
+        if (!selectedSheet) {
+          const { sheets } = await processExcelFile(file);
+          if (sheets && sheets.length > 1) {
+            setAvailableSheets(sheets);
+            setCurrentFile(file);
+            setShowSheetSelector(true);
+            setIsProcessing(false);
+            return;
+          }
+          // If only one sheet, use it automatically
+          selectedSheet = sheets?.[0]?.name;
+        }
+        
+        const { headers: excelHeaders, chunks: excelChunks } = await processExcelFile(file, selectedSheet);
+        
+        if (!excelHeaders || !excelChunks) {
+          throw new Error('Failed to process Excel file');
+        }
+        
         headers = excelHeaders;
         setUploadedHeaders(headers);
         setChunks(excelChunks);
@@ -204,6 +227,13 @@ export const useCSVProcessor = () => {
     }
   };
 
+  const handleSheetSelect = (sheetName: string) => {
+    setShowSheetSelector(false);
+    if (currentFile) {
+      processCSV(currentFile, false, sheetName);
+    }
+  };
+
   return {
     progress,
     isProcessing,
@@ -223,6 +253,9 @@ export const useCSVProcessor = () => {
     selectedVendors,
     setSelectedVendors,
     vendorFilterField,
-    handleVendorFilterMapping
+    handleVendorFilterMapping,
+    showSheetSelector,
+    availableSheets,
+    handleSheetSelect
   };
 };

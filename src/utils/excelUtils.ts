@@ -1,8 +1,14 @@
 
-export const processExcelFile = (file: File): Promise<{
-  headers: string[];
-  chunks: string[];
-  totalRows: number;
+interface SheetInfo {
+  name: string;
+  rowCount: number;
+}
+
+export const processExcelFile = (file: File, selectedSheet?: string): Promise<{
+  headers?: string[];
+  chunks?: string[];
+  totalRows?: number;
+  sheets?: SheetInfo[];
 }> => {
   return new Promise((resolve, reject) => {
     // File size check (10MB warning threshold)
@@ -20,9 +26,13 @@ export const processExcelFile = (file: File): Promise<{
     let headers: string[] = [];
 
     worker.onmessage = (e) => {
-      const { type, data, progress, error, headers: receivedHeaders } = e.data;
+      const { type, data, progress, error, headers: receivedHeaders, sheets } = e.data;
 
       switch (type) {
+        case 'sheetList':
+          worker.terminate();
+          resolve({ sheets });
+          break;
         case 'headers':
           headers = receivedHeaders;
           break;
@@ -51,7 +61,8 @@ export const processExcelFile = (file: File): Promise<{
       const base64 = (e.target?.result as string).split(',')[1];
       worker.postMessage({
         fileData: base64,
-        type: file.type
+        type: file.type,
+        selectedSheet
       });
     };
     reader.onerror = (error) => reject(error);

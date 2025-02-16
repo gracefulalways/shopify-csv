@@ -10,6 +10,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ActionButtons } from "@/components/ActionButtons";
 import { VendorFilter } from "@/components/VendorFilter";
+import { SheetSelector } from "@/components/SheetSelector";
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
@@ -32,7 +33,10 @@ const Index = () => {
     selectedVendors,
     setSelectedVendors,
     vendorFilterField,
-    handleVendorFilterMapping
+    handleVendorFilterMapping,
+    showSheetSelector,
+    availableSheets,
+    handleSheetSelect
   } = useCSVProcessor();
 
   useEffect(() => {
@@ -125,6 +129,12 @@ const Index = () => {
             onSaveMapping={() => saveMappingConfiguration(user?.id, fileName, fieldMapping, rawCSV)}
           />
         )}
+
+        <SheetSelector
+          sheets={availableSheets}
+          onSheetSelect={handleSheetSelect}
+          isOpen={showSheetSelector}
+        />
 
         <Footer />
       </div>

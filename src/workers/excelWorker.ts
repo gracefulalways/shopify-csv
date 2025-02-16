@@ -6,7 +6,7 @@ const CHUNK_SIZE = 1000;
 
 self.onmessage = async (e: MessageEvent) => {
   try {
-    const { fileData, type } = e.data;
+    const { fileData, type, selectedSheet } = e.data;
     
     // Convert base64 to array buffer
     const binaryString = atob(fileData);
@@ -17,14 +17,32 @@ self.onmessage = async (e: MessageEvent) => {
     
     // Read workbook
     const workbook = read(bytes.buffer, { type: 'array' });
-    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+    
+    // If no sheet is selected, send sheet list
+    if (!selectedSheet) {
+      const sheets = workbook.SheetNames.map(name => {
+        const sheet = workbook.Sheets[name];
+        const range = utils.decode_range(sheet['!ref'] || 'A1');
+        return {
+          name,
+          rowCount: range.e.r + 1
+        };
+      });
+      self.postMessage({ type: 'sheetList', sheets });
+      return;
+    }
+    
+    const sheet = workbook.Sheets[selectedSheet];
+    if (!sheet) {
+      throw new Error(`Sheet "${selectedSheet}" not found`);
+    }
     
     // Get total rows for progress calculation
-    const range = utils.decode_range(firstSheet['!ref'] || 'A1');
+    const range = utils.decode_range(sheet['!ref'] || 'A1');
     const totalRows = range.e.r + 1;
     
     // Convert to array of rows
-    const data = utils.sheet_to_json<string[]>(firstSheet, { header: 1 });
+    const data = utils.sheet_to_json<string[]>(sheet, { header: 1 });
     const headers = data[0];
     
     // Send headers immediately
