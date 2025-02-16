@@ -2,31 +2,12 @@
 import { Button } from "@/components/ui/button";
 import { Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
 
 interface HeaderProps {
   user: any;
 }
 
 export const Header = ({ user }: HeaderProps) => {
-  const handleSignOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        throw error;
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error signing out",
-        description: "Please try again or refresh the page.",
-        variant: "destructive",
-      });
-      // Force clear the session from localStorage as a fallback
-      localStorage.removeItem('supabase.auth.token');
-      window.location.reload();
-    }
-  };
-
   return (
     <div className="mb-8">
       <div className="text-center mb-6">
@@ -42,6 +23,25 @@ export const Header = ({ user }: HeaderProps) => {
           to get your products online faster.
         </p>
       </div>
+      
+      {/* Google AdSense Script */}
+      <script 
+        async 
+        src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_PUBLISHER_ID"
+        crossOrigin="anonymous"
+      ></script>
+      {/* AdSense Ad Unit */}
+      <ins 
+        className="adsbygoogle"
+        style={{ display: 'block' }}
+        data-ad-client="ca-pub-YOUR_PUBLISHER_ID"
+        data-ad-slot="YOUR_AD_SLOT_ID"
+        data-ad-format="auto"
+        data-full-width-responsive="true"
+      ></ins>
+      <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
 
       <div className="flex justify-end">
         {!user ? (
@@ -54,7 +54,7 @@ export const Header = ({ user }: HeaderProps) => {
         ) : (
           <Button
             variant="outline"
-            onClick={handleSignOut}
+            onClick={() => supabase.auth.signOut()}
           >
             Sign Out
           </Button>
