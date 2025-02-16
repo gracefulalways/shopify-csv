@@ -10,7 +10,7 @@ export const parseCSVLine = (line: string): string[] => {
     if (char === '"') {
       if (insideQuotes) {
         if (i + 1 < line.length && line[i + 1] === '"') {
-          // Handle escaped quotes
+          // Handle escaped quotes (double quotes)
           field += '"';
           i++; // Skip next quote
         } else {
