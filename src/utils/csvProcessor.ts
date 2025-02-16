@@ -5,15 +5,34 @@ import { FieldMapping } from "@/types/csv";
 
 export const processFileContent = (text: string) => {
   const lines = text.split(/\r?\n/).filter(line => line.trim());
+  if (lines.length === 0) {
+    throw new Error('File is empty');
+  }
+
   const headers = parseCSVLine(lines[0]);
+  const data = [];
+  const totalLines = lines.length;
   
-  const data = lines.slice(1).map(line => {
-    const values = parseCSVLine(line);
-    return headers.reduce((obj: any, header, index) => {
-      obj[header] = values[index] || '';
-      return obj;
-    }, {});
-  });
+  // Process in chunks of 1000 rows
+  const CHUNK_SIZE = 1000;
+  for (let i = 1; i < lines.length; i += CHUNK_SIZE) {
+    const chunk = lines.slice(i, Math.min(i + CHUNK_SIZE, lines.length));
+    const chunkData = chunk.map(line => {
+      const values = parseCSVLine(line);
+      return headers.reduce((obj: any, header, index) => {
+        obj[header] = values[index] || '';
+        return obj;
+      }, {});
+    });
+    
+    data.push(...chunkData);
+    
+    // Report progress
+    const progress = Math.min(100, Math.round((i / totalLines) * 100));
+    window.dispatchEvent(new CustomEvent('csv-processing-progress', {
+      detail: { progress, processedRows: i, totalRows: totalLines }
+    }));
+  }
 
   const autoMapped = autoMapFields(headers, shopifyFields);
 
@@ -37,7 +56,14 @@ export const generateProcessedCSV = (csvData: any[], fieldMapping: FieldMapping)
 
   const csv = [
     shopifyFields.join(','),
-    ...processedData.map(row => shopifyFields.map(field => row[field]).join(','))
+    ...processedData.map(row => 
+      shopifyFields.map(field => {
+        const value = row[field] || '';
+        return value.includes(',') || value.includes('"') || value.includes('\n')
+          ? `"${value.replace(/"/g, '""')}"`
+          : value;
+      }).join(',')
+    )
   ].join('\n');
 
   return csv;
