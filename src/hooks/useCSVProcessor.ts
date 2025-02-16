@@ -20,11 +20,34 @@ export const useCSVProcessor = () => {
   const [isAutoMapped, setIsAutoMapped] = useState(false);
   const [fileName, setFileName] = useState<string>("");
   const [rawCSV, setRawCSV] = useState<string>("");
+  const [selectedVendors, setSelectedVendors] = useState<string[]>([]);
+
+  const getUniqueVendors = (): string[] => {
+    const vendorField = fieldMapping["Vendor"];
+    if (!vendorField) return [];
+    
+    const vendors = new Set(csvData.map(row => row[vendorField]));
+    return Array.from(vendors).filter(Boolean).sort();
+  };
+
+  const getProductCountByVendor = (): { [key: string]: number } => {
+    const vendorField = fieldMapping["Vendor"];
+    if (!vendorField) return {};
+    
+    return csvData.reduce((acc: { [key: string]: number }, row) => {
+      const vendor = row[vendorField];
+      if (vendor) {
+        acc[vendor] = (acc[vendor] || 0) + 1;
+      }
+      return acc;
+    }, {});
+  };
 
   const processCSV = async (file: File, skipUpload: boolean = false) => {
     setIsProcessing(true);
     setProgress(0);
     setFileName(`ShopifyCSV-${file.name}`);
+    setSelectedVendors([]); // Reset selected vendors when new file is uploaded
 
     try {
       let text: string;
@@ -111,18 +134,26 @@ export const useCSVProcessor = () => {
       ...prev,
       [shopifyField]: uploadedField
     }));
+
+    // Reset selected vendors when vendor field mapping changes
+    if (shopifyField === "Vendor") {
+      setSelectedVendors([]);
+    }
   };
 
   const generateProcessedCSV = () => {
-    const processedData = csvData.map(row => {
-      const processedRow: { [key: string]: string } = {};
-      shopifyFields.forEach(shopifyField => {
-        const mappedField = fieldMapping[shopifyField];
-        const value = mappedField && mappedField !== "" ? (row[mappedField] || '') : '';
-        processedRow[shopifyField] = escapeCSVValue(value);
+    const vendorField = fieldMapping["Vendor"];
+    const processedData = csvData
+      .filter(row => !vendorField || selectedVendors.length === 0 || selectedVendors.includes(row[vendorField]))
+      .map(row => {
+        const processedRow: { [key: string]: string } = {};
+        shopifyFields.forEach(shopifyField => {
+          const mappedField = fieldMapping[shopifyField];
+          const value = mappedField && mappedField !== "" ? (row[mappedField] || '') : '';
+          processedRow[shopifyField] = escapeCSVValue(value);
+        });
+        return processedRow;
       });
-      return processedRow;
-    });
 
     const csv = [
       shopifyFields.join(','),
@@ -145,6 +176,10 @@ export const useCSVProcessor = () => {
     saveMappingConfiguration,
     generateProcessedCSV,
     setFileName,
-    rawCSV
+    rawCSV,
+    getUniqueVendors,
+    getProductCountByVendor,
+    selectedVendors,
+    setSelectedVendors
   };
 };

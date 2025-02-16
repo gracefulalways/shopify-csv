@@ -9,6 +9,7 @@ import { useCSVProcessor } from "@/hooks/useCSVProcessor";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ActionButtons } from "@/components/ActionButtons";
+import { VendorFilter } from "@/components/VendorFilter";
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
@@ -25,7 +26,11 @@ const Index = () => {
     saveMappingConfiguration,
     generateProcessedCSV,
     setFileName,
-    rawCSV
+    rawCSV,
+    getUniqueVendors,
+    getProductCountByVendor,
+    selectedVendors,
+    setSelectedVendors
   } = useCSVProcessor();
 
   useEffect(() => {
@@ -63,6 +68,9 @@ const Index = () => {
     document.body.removeChild(link);
   };
 
+  // Only show vendor filter if Vendor field is mapped
+  const showVendorFilter = Boolean(fieldMapping["Vendor"]);
+
   return (
     <div className="min-h-screen p-8 bg-gray-50">
       <div className="max-w-3xl mx-auto">
@@ -90,6 +98,17 @@ const Index = () => {
             onSaveMapping={() => saveMappingConfiguration(user?.id, fileName, fieldMapping, rawCSV)}
             user={user}
           />
+
+          {showVendorFilter && (
+            <div className="mt-6">
+              <VendorFilter
+                vendors={getUniqueVendors()}
+                selectedVendors={selectedVendors}
+                onVendorSelection={setSelectedVendors}
+                productCountByVendor={getProductCountByVendor()}
+              />
+            </div>
+          )}
         </Card>
 
         {Object.keys(fieldMapping).length > 0 && (
