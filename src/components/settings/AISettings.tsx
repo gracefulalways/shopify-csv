@@ -161,7 +161,7 @@ export const AISettings = ({
                       Save Key
                     </Button>
                   </div>
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
                     <span>Don't have an API key?</span>
                     <a
                       href="https://platform.openai.com/api-keys"
