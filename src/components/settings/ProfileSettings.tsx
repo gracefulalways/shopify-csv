@@ -4,6 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger 
+} from "@/components/ui/tooltip";
+import { HelpCircle } from "lucide-react";
 
 interface ProfileSettingsProps {
   email: string;
@@ -80,20 +87,32 @@ export const ProfileSettings = ({
           </div>
         </div>
 
-        <div className="grid gap-6">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Email Address</label>
-            <div className="flex gap-3">
+        <div className="grid grid-cols-2 gap-8">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium">Email Address</label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="w-64">Your email is used for account verification and important notifications. Changing it requires re-verification.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <div className="space-y-2">
               <Input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Your email"
-                className="flex-1"
+                className="w-full"
               />
               <Button 
                 onClick={handleUpdateEmail}
-                className="min-w-[120px]"
+                className="w-full"
               >
                 Update Email
               </Button>
@@ -103,19 +122,31 @@ export const ProfileSettings = ({
             </p>
           </div>
           
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Change Password</label>
-            <div className="flex gap-3">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium">Change Password</label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="w-64">Choose a strong password with at least 8 characters, including numbers and special characters.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <div className="space-y-2">
               <Input
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Enter new password"
-                className="flex-1"
+                className="w-full"
               />
               <Button 
                 onClick={handleUpdatePassword}
-                className="min-w-[120px]"
+                className="w-full"
               >
                 Update Password
               </Button>
