@@ -25,7 +25,8 @@ const Index = () => {
     saveMappingConfiguration,
     generateProcessedCSV,
     setFileName,
-    rawCSV
+    rawCSV,
+    resetFieldMapping
   } = useCSVProcessor();
 
   useEffect(() => {
@@ -99,6 +100,7 @@ const Index = () => {
             user={user}
             onDownload={downloadProcessedFile}
             onSaveMapping={() => saveMappingConfiguration(user?.id, fileName, fieldMapping, rawCSV)}
+            onResetMapping={resetFieldMapping}
           />
         )}
 

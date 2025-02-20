@@ -21,6 +21,21 @@ export const useCSVProcessor = () => {
   const [fileName, setFileName] = useState<string>("");
   const [rawCSV, setRawCSV] = useState<string>("");
 
+  const resetFieldMapping = () => {
+    if (uploadedHeaders.length > 0) {
+      const newMapping = autoMapFields(uploadedHeaders, shopifyFields);
+      setFieldMapping(newMapping);
+      setIsAutoMapped(true);
+      toast({
+        title: "Mapping Reset",
+        description: "Field mappings have been reset to auto-mapped values.",
+      });
+    } else {
+      setFieldMapping({});
+      setIsAutoMapped(false);
+    }
+  };
+
   const processCSV = async (file: File, skipUpload: boolean = false) => {
     setIsProcessing(true);
     setProgress(0);
@@ -148,6 +163,7 @@ export const useCSVProcessor = () => {
     saveMappingConfiguration,
     generateProcessedCSV,
     setFileName,
-    rawCSV
+    rawCSV,
+    resetFieldMapping
   };
 };
