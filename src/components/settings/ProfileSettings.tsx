@@ -117,9 +117,6 @@ export const ProfileSettings = ({
                 Update Email
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground">
-              This email will be used for account-related notifications
-            </p>
           </div>
           
           <div className="space-y-4">
@@ -151,9 +148,6 @@ export const ProfileSettings = ({
                 Update Password
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Choose a strong password to secure your account
-            </p>
           </div>
         </div>
       </div>
