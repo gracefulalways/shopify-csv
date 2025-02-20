@@ -8,6 +8,7 @@ export interface FieldMappingFormProps {
   onSaveMapping: () => void;
   user: any;
   fileName: string;
+  isProcessing: boolean;
 }
 
 export interface FieldGroupProps {
