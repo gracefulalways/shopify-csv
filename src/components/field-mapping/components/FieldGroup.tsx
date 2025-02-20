@@ -3,6 +3,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FieldGroupProps } from "../types";
 import { FieldCategoryIcon } from "./FieldCategoryIcon";
 import { getFieldCategory } from "@/utils/fieldMappingUtils";
+import { shopifyFieldDescriptions } from "@/utils/shopifyFieldDescriptions";
+import { HelpCircle } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
 
 export const FieldGroup = ({ 
   title, 
@@ -19,7 +27,19 @@ export const FieldGroup = ({
       {fields.map((field) => (
         <div key={field} className="flex items-center gap-4">
           <FieldCategoryIcon field={field} />
-          <span className="w-1/3 text-sm font-medium">{field}</span>
+          <div className="w-1/3 flex items-center gap-2">
+            <span className="text-sm font-medium">{field}</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="h-4 w-4 text-gray-400 hover:text-gray-600 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-sm">{shopifyFieldDescriptions[field] || "No description available."}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
           <Select
             value={fieldMapping[field] || "__NONE__"}
             onValueChange={(value) => onFieldMapping(field, value === "__NONE__" ? "" : value)}
