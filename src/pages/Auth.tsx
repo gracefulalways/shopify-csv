@@ -12,6 +12,7 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -28,7 +29,17 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      if (isSignUp) {
+      if (isForgotPassword) {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/auth?reset=true`,
+        });
+        if (error) throw error;
+        toast({
+          title: "Success",
+          description: "Check your email for the password reset link.",
+        });
+        setIsForgotPassword(false);
+      } else if (isSignUp) {
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -61,7 +72,11 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <Card className="w-full max-w-md p-8">
         <h1 className="text-2xl font-bold text-center mb-8">
-          {isSignUp ? "Create an Account" : "Welcome Back"}
+          {isForgotPassword
+            ? "Reset Password"
+            : isSignUp
+            ? "Create an Account"
+            : "Welcome Back"}
         </h1>
         <form onSubmit={handleAuth} className="space-y-4">
           <div>
@@ -73,31 +88,49 @@ const Auth = () => {
               required
             />
           </div>
-          <div>
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
+          {!isForgotPassword && (
+            <div>
+              <Input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+          )}
           <Button
             type="submit"
             className="w-full"
             disabled={loading}
           >
-            {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
+            {loading
+              ? "Loading..."
+              : isForgotPassword
+              ? "Send Reset Link"
+              : isSignUp
+              ? "Sign Up"
+              : "Sign In"}
           </Button>
         </form>
-        <div className="mt-4 text-center">
+        <div className="mt-4 text-center space-y-2">
+          {!isForgotPassword && (
+            <button
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-sm text-gray-600 hover:underline block w-full"
+            >
+              {isSignUp
+                ? "Already have an account? Sign in"
+                : "Don't have an account? Sign up"}
+            </button>
+          )}
           <button
-            onClick={() => setIsSignUp(!isSignUp)}
-            className="text-sm text-gray-600 hover:underline"
+            onClick={() => setIsForgotPassword(!isForgotPassword)}
+            className="text-sm text-gray-600 hover:underline block w-full"
           >
-            {isSignUp
-              ? "Already have an account? Sign in"
-              : "Don't have an account? Sign up"}
+            {isForgotPassword
+              ? "Back to Sign In"
+              : "Forgot your password?"}
           </button>
         </div>
       </Card>
