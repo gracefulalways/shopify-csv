@@ -85,12 +85,12 @@ export const AISettings = ({
     <Card className="p-6">
       <div className="space-y-6">
         <div className="border-b pb-4">
-          <div className="flex items-start gap-3">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
               <Brain className="h-5 w-5 text-primary" />
             </div>
-            <div>
-              <h2 className="text-xl font-semibold">AI Configuration</h2>
+            <div className="flex-1">
+              <h2 className="text-xl font-semibold leading-none mb-1">AI Configuration</h2>
               <p className="text-sm text-muted-foreground">
                 Enhance your product management with AI-powered features
               </p>

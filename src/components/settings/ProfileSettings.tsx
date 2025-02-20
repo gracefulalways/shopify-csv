@@ -64,8 +64,8 @@ export const ProfileSettings = ({
     <Card className="p-6">
       <div className="space-y-6">
         <div className="border-b pb-4">
-          <div className="flex items-start gap-3">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
               <svg
                 className="h-5 w-5 text-primary"
                 xmlns="http://www.w3.org/2000/svg"
@@ -80,8 +80,8 @@ export const ProfileSettings = ({
                 <circle cx="12" cy="7" r="4" />
               </svg>
             </div>
-            <div>
-              <h2 className="text-xl font-semibold">Profile Settings</h2>
+            <div className="flex-1">
+              <h2 className="text-xl font-semibold leading-none mb-1">Profile Settings</h2>
               <p className="text-sm text-muted-foreground">
                 Manage your email and password settings
               </p>
