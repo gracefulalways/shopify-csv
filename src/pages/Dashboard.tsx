@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
 import { MappingList } from "@/components/MappingList";
+import { Settings, ArrowLeft } from "lucide-react";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -147,7 +148,20 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen p-8 bg-gray-50">
       <div className="max-w-3xl mx-auto space-y-6">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Settings className="h-6 w-6" />
+            <h1 className="text-2xl font-bold">Settings</h1>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
+          </Button>
+        </div>
         
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4">Profile Settings</h2>
@@ -224,15 +238,6 @@ const Dashboard = () => {
         <Card className="p-6">
           <MappingList onSelect={() => {}} />
         </Card>
-
-        <div className="flex justify-end">
-          <Button
-            variant="outline"
-            onClick={() => navigate("/")}
-          >
-            Back to Home
-          </Button>
-        </div>
       </div>
     </div>
   );
