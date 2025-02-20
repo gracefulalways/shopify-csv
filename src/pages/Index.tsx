@@ -71,9 +71,9 @@ const Index = () => {
 
         <div className="text-center mb-8">
           <p className="text-lg text-gray-700 leading-relaxed">
-            Easily upload and format your inventory files (CSV or Excel) into Shopify-ready CSVs with ShopifyCSV.app. 
-            No manual edits, just a quick, seamless conversion for hassle-free product listings. 
-            Try it now! It's Free!
+            ShopifyCSV.app makes it effortless to convert your CSV or Excel inventory files into Shopify-ready CSVs. 
+            Simply upload your file, let our tool format it to meet Shopify's exact requirements, and download your ready-to-use CSV in seconds. 
+            No manual edits, no hassle—just a seamless way to get your products online faster.
           </p>
         </div>
 
