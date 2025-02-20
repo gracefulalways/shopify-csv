@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -69,80 +71,88 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <Card className="w-full max-w-md p-8">
-        <h1 className="text-2xl font-bold text-center mb-8">
-          {isForgotPassword
-            ? "Reset Password"
-            : isSignUp
-            ? "Create an Account"
-            : "Welcome Back"}
-        </h1>
-        <form onSubmit={handleAuth} className="space-y-4">
-          <div>
-            <Input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          {!isForgotPassword && (
-            <div>
-              <Input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-3xl mx-auto p-8">
+        <Header user={null} />
+        
+        <div className="flex items-center justify-center p-4">
+          <Card className="w-full max-w-md p-8">
+            <h1 className="text-2xl font-bold text-center mb-8">
+              {isForgotPassword
+                ? "Reset Password"
+                : isSignUp
+                ? "Create an Account"
+                : "Welcome Back"}
+            </h1>
+            <form onSubmit={handleAuth} className="space-y-4">
+              <div>
+                <Input
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              {!isForgotPassword && (
+                <div>
+                  <Input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading}
+              >
+                {loading
+                  ? "Loading..."
+                  : isForgotPassword
+                  ? "Send Reset Link"
+                  : isSignUp
+                  ? "Sign Up"
+                  : "Sign In"}
+              </Button>
+            </form>
+            <div className="mt-4 text-center space-y-2">
+              <button
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                  setIsForgotPassword(false);
+                }}
+                className="text-sm text-gray-600 hover:underline block w-full"
+              >
+                {isSignUp
+                  ? "Already have an account? Sign in"
+                  : "Don't have an account? Sign up"}
+              </button>
+              {!isSignUp && !isForgotPassword && (
+                <button
+                  onClick={() => setIsForgotPassword(true)}
+                  className="text-sm text-gray-600 hover:underline block w-full"
+                >
+                  Forgot your password?
+                </button>
+              )}
+              {isForgotPassword && (
+                <button
+                  onClick={() => setIsForgotPassword(false)}
+                  className="text-sm text-gray-600 hover:underline block w-full"
+                >
+                  Back to Sign In
+                </button>
+              )}
             </div>
-          )}
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loading}
-          >
-            {loading
-              ? "Loading..."
-              : isForgotPassword
-              ? "Send Reset Link"
-              : isSignUp
-              ? "Sign Up"
-              : "Sign In"}
-          </Button>
-        </form>
-        <div className="mt-4 text-center space-y-2">
-          <button
-            onClick={() => {
-              setIsSignUp(!isSignUp);
-              setIsForgotPassword(false);
-            }}
-            className="text-sm text-gray-600 hover:underline block w-full"
-          >
-            {isSignUp
-              ? "Already have an account? Sign in"
-              : "Don't have an account? Sign up"}
-          </button>
-          {!isSignUp && !isForgotPassword && (
-            <button
-              onClick={() => setIsForgotPassword(true)}
-              className="text-sm text-gray-600 hover:underline block w-full"
-            >
-              Forgot your password?
-            </button>
-          )}
-          {isForgotPassword && (
-            <button
-              onClick={() => setIsForgotPassword(false)}
-              className="text-sm text-gray-600 hover:underline block w-full"
-            >
-              Back to Sign In
-            </button>
-          )}
+          </Card>
         </div>
-      </Card>
+
+        <Footer />
+      </div>
     </div>
   );
 };

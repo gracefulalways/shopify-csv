@@ -7,6 +7,7 @@ import { MappingList } from "@/components/MappingList";
 import { SettingsHeader } from "@/components/settings/SettingsHeader";
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
 import { AISettings } from "@/components/settings/AISettings";
+import { Footer } from "@/components/Footer";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -74,6 +75,8 @@ const Dashboard = () => {
         <Card className="p-6">
           <MappingList onSelect={() => {}} />
         </Card>
+
+        <Footer />
       </div>
     </div>
   );
