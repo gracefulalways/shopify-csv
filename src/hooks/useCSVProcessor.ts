@@ -23,16 +23,55 @@ export const useCSVProcessor = () => {
 
   const resetFieldMapping = () => {
     if (uploadedHeaders.length > 0) {
+      tryAIMapping();
+    } else {
+      setFieldMapping({});
+      setIsAutoMapped(false);
+    }
+  };
+
+  const tryAIMapping = async () => {
+    try {
+      const { data: { exists } } = await supabase.functions.invoke('manage-api-key', {
+        body: { action: 'check', key_type: 'openai' }
+      });
+
+      if (!exists) {
+        // Fall back to basic auto-mapping if no OpenAI key is configured
+        const newMapping = autoMapFields(uploadedHeaders, shopifyFields);
+        setFieldMapping(newMapping);
+        setIsAutoMapped(true);
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('ai-field-mapping', {
+        body: { 
+          uploadedHeaders,
+          shopifyFields
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.mapping) {
+        setFieldMapping(data.mapping);
+        setIsAutoMapped(true);
+        toast({
+          title: "AI Mapping Complete",
+          description: "Fields have been automatically mapped using AI. Please review the mappings.",
+        });
+      }
+    } catch (error: any) {
+      console.error('Error in AI mapping:', error);
+      // Fall back to basic auto-mapping
       const newMapping = autoMapFields(uploadedHeaders, shopifyFields);
       setFieldMapping(newMapping);
       setIsAutoMapped(true);
       toast({
-        title: "Mapping Reset",
-        description: "Field mappings have been reset to auto-mapped values.",
+        title: "Using Basic Mapping",
+        description: "AI mapping failed, using basic field matching instead.",
+        variant: "destructive",
       });
-    } else {
-      setFieldMapping({});
-      setIsAutoMapped(false);
     }
   };
 
@@ -40,7 +79,6 @@ export const useCSVProcessor = () => {
     setIsProcessing(true);
     setProgress(0);
     
-    // Create a base filename without extension, then add .csv
     const baseFileName = file.name.replace(/\.[^/.]+$/, '');
     setFileName(`ShopifyCSV-${baseFileName}.csv`);
 
@@ -55,7 +93,6 @@ export const useCSVProcessor = () => {
           reader.readAsText(file);
         });
       } else {
-        // Process Excel file
         text = await processExcelFile(file);
       }
 
@@ -73,11 +110,9 @@ export const useCSVProcessor = () => {
       });
       setCsvData(data);
 
-      const autoMapped = autoMapFields(headers, shopifyFields);
-      setFieldMapping(autoMapped);
-      setIsAutoMapped(true);
+      // Try AI mapping first
+      await tryAIMapping();
 
-      // Upload the file to Supabase Storage if not skipping upload
       if (!skipUpload) {
         const user = (await supabase.auth.getUser()).data.user;
         if (user) {
@@ -98,13 +133,8 @@ export const useCSVProcessor = () => {
           }
         }
       }
-      
-      toast({
-        title: "Fields Auto-Mapped",
-        description: "Please review the field mappings and adjust if needed before downloading.",
-      });
 
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
         description: "Failed to process file. Please make sure the file is a valid CSV or Excel file.",
