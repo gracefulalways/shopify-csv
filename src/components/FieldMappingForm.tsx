@@ -25,6 +25,7 @@ interface FieldMappingFormProps {
   onFieldMapping: (shopifyField: string, uploadedField: string) => void;
   onSaveMapping: () => void;
   user: any;
+  fileName: string;
 }
 
 const FieldCategoryIcon = ({ field }: { field: string }) => {
@@ -134,7 +135,8 @@ export const FieldMappingForm = ({
   fieldMapping,
   onFieldMapping,
   onSaveMapping,
-  user
+  user,
+  fileName
 }: FieldMappingFormProps) => {
   const unmappedMandatoryFields = mandatoryFields.filter(
     field => !fieldMapping[field]
@@ -146,7 +148,7 @@ export const FieldMappingForm = ({
         <Alert className="mb-6">
           <InfoIcon className="h-4 w-4" />
           <AlertDescription>
-            Fields have been automatically mapped. Please review the mappings below and adjust if needed before downloading the processed file.
+            All done. Your file - '{fileName}' - has been successfully upload and fields have been automatically mapped. Please review the mappings below and adjust if needed before downloading the processed file.
           </AlertDescription>
         </Alert>
       )}

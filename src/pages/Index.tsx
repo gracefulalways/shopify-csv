@@ -92,6 +92,7 @@ const Index = () => {
             onFieldMapping={handleFieldMapping}
             onSaveMapping={() => saveMappingConfiguration(user?.id, fileName, fieldMapping, rawCSV)}
             user={user}
+            fileName={fileName}
           />
         </Card>
 
