@@ -46,10 +46,9 @@ const Index = () => {
       handleFieldMapping(shopifyField, uploadedField as string);
     });
     setFileName(mapping.original_filename);
-    // Create a file from the CSV content and process it
     const blob = new Blob([mapping.csv_content], { type: 'text/csv' });
     const file = new File([blob], mapping.original_filename, { type: 'text/csv' });
-    processCSV(file, true); // Pass true to skip upload since we're loading an existing file
+    processCSV(file, true);
   };
 
   const downloadProcessedFile = () => {
@@ -58,7 +57,6 @@ const Index = () => {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    // Always use .csv extension for the downloaded file
     const downloadFileName = fileName.replace(/\.[^/.]+$/, '') + '.csv';
     link.setAttribute('download', downloadFileName);
     document.body.appendChild(link);
@@ -70,6 +68,14 @@ const Index = () => {
     <div className="min-h-screen p-8 bg-gray-50">
       <div className="max-w-3xl mx-auto">
         <Header user={user} />
+
+        <div className="text-center mb-8">
+          <p className="text-lg text-gray-700 leading-relaxed">
+            Easily upload and format your inventory files (CSV or Excel) into Shopify-ready CSVs with ShopifyCSV.app. 
+            No manual edits, just a quick, seamless conversion for hassle-free product listings. 
+            Try it now! It's Free!
+          </p>
+        </div>
 
         {user && (
           <Card className="p-6 mb-6">
