@@ -21,7 +21,7 @@ export const Header = ({ user }: HeaderProps) => {
         {user ? (
           <>
             <Link to="/dashboard">
-              <Button variant="outline">Dashboard</Button>
+              <Button variant="outline">Settings</Button>
             </Link>
             <Button variant="outline" onClick={handleSignOut}>
               Sign Out
