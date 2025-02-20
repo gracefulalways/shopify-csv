@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { MappingList } from "@/components/MappingList";
 import { CSVDropzone } from "@/components/CSVDropzone";
-import { FieldMappingForm } from "@/components/FieldMappingForm";
+import { FieldMappingForm } from "@/components/field-mapping/FieldMappingForm";
 import { useCSVProcessor } from "@/hooks/useCSVProcessor";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
