@@ -53,6 +53,41 @@ export const shopifyFields = [
   "Status"
 ];
 
+export const mandatoryFields = [
+  "Handle",
+  "Title",
+  "Variant Price",
+  "Variant Inventory Qty"
+];
+
+export const conditionalFields = [
+  "Option1 Name",
+  "Option1 Value",
+  "Option2 Name",
+  "Option2 Value",
+  "Option3 Name",
+  "Option3 Value",
+  "Variant SKU",
+  "Variant Inventory Policy",
+  "Variant Inventory Tracker"
+];
+
+export const importantOptionalFields = [
+  "Body (HTML)",
+  "Vendor",
+  "Type",
+  "Tags",
+  "Image Src",
+  "Published"
+];
+
+export const getFieldCategory = (field: string) => {
+  if (mandatoryFields.includes(field)) return "mandatory";
+  if (conditionalFields.includes(field)) return "conditional";
+  if (importantOptionalFields.includes(field)) return "important";
+  return "optional";
+};
+
 export const autoMapFields = (headers: string[], shopifyFields: string[]) => {
   const newMapping: { [key: string]: string } = {};
   
