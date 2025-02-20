@@ -55,31 +55,74 @@ export const ProfileSettings = ({
 
   return (
     <Card className="p-6">
-      <h2 className="text-xl font-semibold mb-4">Profile Settings</h2>
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-2">Email Address</label>
-          <div className="flex gap-2">
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Your email"
-            />
-            <Button onClick={handleUpdateEmail}>Update Email</Button>
+      <div className="space-y-6">
+        <div className="flex items-center gap-3 border-b pb-4">
+          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <svg
+              className="h-5 w-5 text-primary"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold">Profile Settings</h2>
+            <p className="text-sm text-muted-foreground">
+              Manage your email and password settings
+            </p>
           </div>
         </div>
-        
-        <div>
-          <label className="block text-sm font-medium mb-2">Change Password</label>
-          <div className="flex gap-2">
-            <Input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="New password"
-            />
-            <Button onClick={handleUpdatePassword}>Update Password</Button>
+
+        <div className="grid gap-6">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Email Address</label>
+            <div className="flex gap-3">
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Your email"
+                className="flex-1"
+              />
+              <Button 
+                onClick={handleUpdateEmail}
+                className="min-w-[120px]"
+              >
+                Update Email
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              This email will be used for account-related notifications
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Change Password</label>
+            <div className="flex gap-3">
+              <Input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password"
+                className="flex-1"
+              />
+              <Button 
+                onClick={handleUpdatePassword}
+                className="min-w-[120px]"
+              >
+                Update Password
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Choose a strong password to secure your account
+            </p>
           </div>
         </div>
       </div>
