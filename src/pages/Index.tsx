@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +8,7 @@ import { useCSVProcessor } from "@/hooks/useCSVProcessor";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ActionButtons } from "@/components/ActionButtons";
+import { FieldMappingFormProps } from "@/components/field-mapping/types";
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
@@ -99,6 +99,7 @@ const Index = () => {
             onSaveMapping={() => saveMappingConfiguration(user?.id, fileName, fieldMapping, rawCSV)}
             user={user}
             fileName={fileName}
+            isProcessing={isProcessing}
           />
         </Card>
 

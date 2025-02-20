@@ -19,7 +19,8 @@ export const FieldMappingForm = ({
   onFieldMapping,
   onSaveMapping,
   user,
-  fileName
+  fileName,
+  isProcessing
 }: FieldMappingFormProps) => {
   const unmappedMandatoryFields = mandatoryFields.filter(
     field => !fieldMapping[field]
@@ -32,6 +33,7 @@ export const FieldMappingForm = ({
         uploadedHeaders={uploadedHeaders}
         unmappedMandatoryFields={unmappedMandatoryFields}
         fileName={fileName}
+        isProcessing={isProcessing}
       />
 
       {uploadedHeaders.length > 0 && (

@@ -1,6 +1,4 @@
 
-import { ReactNode } from "react";
-
 export interface FieldMappingFormProps {
   isAutoMapped: boolean;
   uploadedHeaders: string[];
@@ -26,6 +24,7 @@ export interface MappingAlertsProps {
   uploadedHeaders: string[];
   unmappedMandatoryFields: string[];
   fileName: string;
+  isProcessing: boolean;
 }
 
 export interface FieldCategoryIconProps {

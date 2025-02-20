@@ -7,11 +7,12 @@ export const MappingAlerts = ({
   isAutoMapped, 
   uploadedHeaders,
   unmappedMandatoryFields,
-  fileName 
+  fileName,
+  isProcessing
 }: MappingAlertsProps) => {
   return (
     <>
-      {isAutoMapped && uploadedHeaders.length > 0 && (
+      {isAutoMapped && uploadedHeaders.length > 0 && !isProcessing && (
         <Alert className="mb-6">
           <InfoIcon className="h-4 w-4" />
           <AlertDescription>
